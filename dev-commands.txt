@@ -1,0 +1,50 @@
+try { . "c:\Users\mjuna\AppData\Local\Programs\Microsoft VS Code\bdd88df003\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+venv\Scripts\Activate
+pip freeze > requirements.txt
+dir
+git init
+git add.
+git add .
+git commit -m "Initial FastAPI SETUP"
+git branch -M main
+git remote add origin https://github.com/Junaid-Techie/job-ai-app.git
+git push -u origin main
+git --version
+python --version
+pip install sqlalchemy psycopg2-binary python-dotenv
+pip freeze > requirements.txt
+ls .\requirements.txt
+python -m uvicorn api.main:app --reload
+python -m uvicorn api.main:app --reload
+pip install pgvector
+pip freeze > requirements.txt
+python -m uvicorn api.main:app --reload
+git status
+git add .
+git status
+git commit -m "Connected to Supabase and added Resume vector model"
+git status
+python -m uvicorn api.main:app --reload
+pip install openai
+pip freeze > requirements.txt
+python -m uvicorn api.main:app --reload
+python -m uvicorn api.main:app --reload
+python -m uvicorn api.main:app --reload
+python -m uvicorn api.main:app --reload
+git status
+git add .
+git status
+git commit -m "Added Semantic matching and OpenAI embeddings Integration"
+git push
+git status
+git add .
+git status
+git commit -m "Added Semantic matching and OpenAI embeddings Integration"
+git push
+git log --oneline
+git reset --hard origin/main
+git grep sk-
+git status
+git add .
+git commit -m "Added Semantic matching and OpenAI embeddings Integration"
+git push
