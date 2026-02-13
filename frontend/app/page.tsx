@@ -1,3 +1,5 @@
+"use client";
+
 import { motion } from "framer-motion";
 
 export default function Home() {
@@ -15,7 +17,7 @@ export default function Home() {
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
+        transition={{ delay: 0.4 }}
         className="mt-6 text-gray-400 max-w-2xl mx-auto"
       >
         AI-powered job matching using vector embeddings and real semantic search.
