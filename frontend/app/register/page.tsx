@@ -12,32 +12,24 @@ export default function Register() {
   const [error, setError] = useState("");
 
   const handleRegister = async () => {
-    setError("");
+  setError("");
 
-    if (!email || !password) {
-      setError("Please enter email and password.");
-      return;
-    }
+  const response = await fetch(`${API_URL}/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
 
-    const response = await fetch(`${API_URL}/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email,
-        password,
-      }),
-    });
+  const data = await response.json();
 
-    if (!response.ok) {
-      const data = await response.json();
-      setError(data.detail || "Registration failed");
-      return;
-    }
+  if (!response.ok) {
+    setError(data.detail || "Registration failed");
+    return;
+  }
 
-    router.push("/login");
-  };
+  router.push("/login");
+};
+
 
   return (
     <div className="relative z-20 max-w-md mx-auto py-20">
