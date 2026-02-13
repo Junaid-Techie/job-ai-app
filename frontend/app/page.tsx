@@ -9,181 +9,149 @@ export default function Home() {
   const [resumeId, setResumeId] = useState<number | null>(null);
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-
-  const [filters, setFilters] = useState({
-    work_mode: "",
-    min_salary: "",
-  });
+  const [selectedJob, setSelectedJob] = useState<any>(null);
+  const [dark, setDark] = useState(false);
 
   const addResume = async () => {
     if (!resume) return;
-
     setLoading(true);
-    setError("");
 
-    try {
-      const response = await fetch(
-        `${API_URL}/add-resume/?content=${encodeURIComponent(resume)}`,
-        { method: "POST" }
-      );
+    const response = await fetch(
+      `${API_URL}/add-resume/?content=${encodeURIComponent(resume)}`,
+      { method: "POST" }
+    );
 
-      const data = await response.json();
-      setResumeId(data.resume_id);
-    } catch {
-      setError("Failed to add resume.");
-    } finally {
-      setLoading(false);
-    }
+    const data = await response.json();
+    setResumeId(data.resume_id);
+    setLoading(false);
   };
 
   const matchJobs = async () => {
     if (!resumeId) return;
-
     setLoading(true);
-    setError("");
 
-    try {
-      const queryParams = new URLSearchParams({
-        work_mode: filters.work_mode,
-        min_salary: filters.min_salary,
-      });
+    const response = await fetch(
+      `${API_URL}/match-jobs/${resumeId}`
+    );
 
-      const response = await fetch(
-        `${API_URL}/match-jobs/${resumeId}?${queryParams}`
-      );
-
-      const data = await response.json();
-      setMatches(data);
-    } catch {
-      setError("Failed to match jobs.");
-    } finally {
-      setLoading(false);
-    }
+    const data = await response.json();
+    setMatches(data);
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-6 py-10">
-      <div className="max-w-6xl mx-auto">
+    <div className={dark ? "dark" : ""}>
+      <div className="min-h-screen bg-gray-100 dark:bg-gray-950 transition-colors duration-300">
 
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-4xl font-bold text-gray-900">
-            🚀 Job AI Matcher
+        {/* Hero */}
+        <div className="max-w-6xl mx-auto px-6 pt-16 pb-12 text-center">
+          <h1 className="text-5xl font-semibold tracking-tight text-gray-900 dark:text-white">
+            Job AI Matcher
           </h1>
-          <p className="text-gray-500 mt-2">
-            Semantic job intelligence powered by vector search.
+          <p className="mt-4 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
+            Semantic job intelligence powered by vector embeddings.
           </p>
+
+          <button
+            onClick={() => setDark(!dark)}
+            className="mt-6 px-4 py-2 text-sm border border-gray-300 dark:border-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-800 transition"
+          >
+            Toggle {dark ? "Light" : "Dark"} Mode
+          </button>
         </div>
 
         {/* Main Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="max-w-6xl mx-auto px-6 pb-20 grid grid-cols-1 lg:grid-cols-2 gap-10">
 
-          {/* Left Card */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-6">
-            
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-3">
-                Resume
-              </h2>
+          {/* Glass Panel */}
+          <div className="backdrop-blur-xl bg-white/60 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-2xl p-8 shadow-xl transition hover:shadow-2xl">
 
-              <textarea
-                className="w-full border border-gray-300 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
-                rows={6}
-                placeholder="Paste your resume here..."
-                value={resume}
-                onChange={(e) => setResume(e.target.value)}
-              />
-            </div>
+            <h2 className="text-lg font-medium mb-4 text-gray-900 dark:text-white">
+              Resume
+            </h2>
+
+            <textarea
+              className="w-full p-4 rounded-xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
+              rows={6}
+              placeholder="Paste your resume..."
+              value={resume}
+              onChange={(e) => setResume(e.target.value)}
+            />
 
             <button
               onClick={addResume}
-              disabled={!resume || loading}
-              className="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition disabled:opacity-40"
+              className="mt-4 w-full py-3 bg-gray-900 dark:bg-white dark:text-black text-white rounded-xl transition hover:opacity-90"
             >
-              {loading ? "Processing..." : "Add Resume"}
+              Add Resume
             </button>
-
-            <div>
-              <h2 className="text-lg font-semibold text-gray-800 mb-3">
-                Filters
-              </h2>
-
-              <div className="space-y-4">
-                <select
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm"
-                  onChange={(e) =>
-                    setFilters({ ...filters, work_mode: e.target.value })
-                  }
-                >
-                  <option value="">Work Mode</option>
-                  <option value="remote">Remote</option>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="onsite">Onsite</option>
-                </select>
-
-                <input
-                  type="number"
-                  placeholder="Minimum Salary"
-                  className="w-full border border-gray-300 rounded-lg p-3 text-sm"
-                  onChange={(e) =>
-                    setFilters({ ...filters, min_salary: e.target.value })
-                  }
-                />
-              </div>
-            </div>
 
             <button
               onClick={matchJobs}
-              disabled={!resumeId || loading}
-              className="w-full bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition disabled:opacity-40"
+              className="mt-3 w-full py-3 bg-gray-700 text-white rounded-xl transition hover:opacity-90"
             >
-              {loading ? "Matching..." : "Match Jobs"}
+              Match Jobs
             </button>
-
-            {error && (
-              <div className="text-sm text-red-500">{error}</div>
-            )}
           </div>
 
-          {/* Right Results */}
+          {/* Results */}
           <div className="space-y-6">
-            {matches.length === 0 && !loading && (
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-gray-500">
-                No matches yet. Add resume and apply filters.
+
+            {loading && (
+              <div className="animate-pulse space-y-4">
+                {[1,2,3].map(i => (
+                  <div key={i} className="h-24 bg-gray-300 dark:bg-gray-800 rounded-xl" />
+                ))}
               </div>
             )}
 
-            {matches.map((job) => (
+            {!loading && matches.map((job) => (
               <div
                 key={job.job_id}
-                className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition"
+                onClick={() => setSelectedJob(job)}
+                className="cursor-pointer backdrop-blur-xl bg-white/60 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-2xl p-6 shadow-xl transition transform hover:-translate-y-1 hover:shadow-2xl"
               >
-                <div className="flex justify-between items-center mb-3">
-                  <h3 className="text-lg font-semibold text-gray-900">
+                <div className="flex justify-between items-center">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     {job.title}
                   </h3>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
                     {job.similarity_score}%
                   </span>
                 </div>
 
-                <div className="w-full bg-gray-200 h-2 rounded">
+                <div className="mt-3 h-2 bg-gray-200 dark:bg-gray-700 rounded">
                   <div
-                    className="bg-gray-900 h-2 rounded"
+                    className="h-2 bg-gray-900 dark:bg-white rounded"
                     style={{ width: `${job.similarity_score}%` }}
                   />
                 </div>
-
-                <div className="mt-4 text-sm text-gray-600 space-y-1">
-                  <p>📍 {job.location || "Location not specified"}</p>
-                  <p>💼 {job.work_mode || "Work mode not specified"}</p>
-                </div>
               </div>
             ))}
-          </div>
 
+          </div>
         </div>
+
+        {/* Modal */}
+        {selectedJob && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+            <div className="bg-white dark:bg-gray-900 p-8 rounded-2xl max-w-lg w-full shadow-2xl">
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
+                {selectedJob.title}
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
+                Match Score: {selectedJob.similarity_score}%
+              </p>
+
+              <button
+                onClick={() => setSelectedJob(null)}
+                className="mt-6 w-full py-2 bg-gray-900 dark:bg-white dark:text-black text-white rounded-xl"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
