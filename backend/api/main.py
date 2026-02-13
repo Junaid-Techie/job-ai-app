@@ -1,52 +1,70 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from .auth import router as auth_router
 from datetime import datetime, timedelta
 
+from .auth import router as auth_router
+from .upload import router as upload_router
 from .database import engine, SessionLocal
 from .models import Base, Resume, Job
 from .embedding_service import generate_embedding
 from .security import get_current_user
 
-
 app = FastAPI()
 
+# -------------------------
+# Routers
+# -------------------------
 app.include_router(auth_router)
+app.include_router(upload_router)
 
-# Enable CORS for frontend
+# -------------------------
+# CORS
+# -------------------------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-    "http://localhost:3000",
-    "https://job-ai-app-six.vercel.app"],
+        "http://localhost:3000",
+        "https://job-ai-app-six.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Create tables
+# -------------------------
+# Create Tables
+# -------------------------
 Base.metadata.create_all(bind=engine)
 
 
+# -------------------------
+# Root
+# -------------------------
 @app.get("/")
 def root():
     return {"message": "Job AI Matcher Running"}
 
 
 # -------------------------
-# Add Resume
+# Add Resume (Protected)
 # -------------------------
 @app.post("/add-resume/")
-def add_resume(content: str):
-    db: Session = SessionLocal()
-
+def add_resume(
+    content: str,
+    db: Session = Depends(SessionLocal),
+    user=Depends(get_current_user),
+):
     try:
+        user_id = int(user["sub"])
         embedding = generate_embedding(content)
 
         resume = Resume(
             content=content,
-            embedding=embedding
+            embedding=embedding,
+            user_id=user_id,
+            file_path="manual_input",
+            file_type="text",
         )
 
         db.add(resume)
@@ -63,7 +81,7 @@ def add_resume(content: str):
 
 
 # -------------------------
-# Add Job
+# Add Job (Admin Only Later)
 # -------------------------
 @app.post("/add-job/")
 def add_job(
@@ -78,9 +96,8 @@ def add_job(
     sponsorship: bool = False,
     company_size: str = "",
     industry: str = "",
+    db: Session = Depends(SessionLocal),
 ):
-    db: Session = SessionLocal()
-
     try:
         combined_text = f"{title}\n{description}"
         embedding = generate_embedding(combined_text)
@@ -114,7 +131,7 @@ def add_job(
 
 
 # -------------------------
-# Match Jobs with Filters
+# Match Jobs (Protected + Ownership Enforced)
 # -------------------------
 @app.get("/match-jobs/{resume_id}")
 def match_jobs(
@@ -129,11 +146,16 @@ def match_jobs(
     company_size: str = "",
     industry: str = "",
     posted_within_days: int = 0,
+    db: Session = Depends(SessionLocal),
+    user=Depends(get_current_user),
 ):
-    db: Session = SessionLocal()
-
     try:
-        resume = db.query(Resume).filter(Resume.id == resume_id).first()
+        user_id = int(user["sub"])
+
+        resume = db.query(Resume).filter(
+            Resume.id == resume_id,
+            Resume.user_id == user_id
+        ).first()
 
         if not resume:
             raise HTTPException(status_code=404, detail="Resume not found")
@@ -148,7 +170,7 @@ def match_jobs(
             Job.embedding.l2_distance(resume.embedding).label("distance")
         )
 
-        # Apply filters
+        # Filters
         if min_salary > 0:
             query = query.filter(Job.salary_min >= min_salary)
 

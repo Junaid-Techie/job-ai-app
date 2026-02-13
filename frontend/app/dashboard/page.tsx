@@ -38,14 +38,15 @@ export default function Dashboard() {
     setError("");
 
     try {
-      const response = await fetch(`${API_URL}/add-resume/`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ content: resume }),
-      });
+      const response = await fetch(
+        `${API_URL}/add-resume/?content=${encodeURIComponent(resume)}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to add resume");
@@ -112,7 +113,6 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
-        {/* Resume Panel */}
         <div className="glass-panel p-8 rounded-2xl shadow-2xl space-y-6">
           <textarea
             className="w-full p-4 rounded-xl bg-gray-900 border border-gray-700 text-sm"
@@ -137,7 +137,6 @@ export default function Dashboard() {
           </button>
         </div>
 
-        {/* Results Panel */}
         <div className="space-y-6">
           {loading && (
             <>
@@ -156,13 +155,6 @@ export default function Dashboard() {
                 <div className="flex justify-between mb-2">
                   <h3>{job.title}</h3>
                   <span>{job.similarity_score}%</span>
-                </div>
-
-                <div className="w-full bg-gray-700 h-2 rounded">
-                  <div
-                    className="h-2 bg-white rounded"
-                    style={{ width: `${job.similarity_score}%` }}
-                  />
                 </div>
               </div>
             ))}

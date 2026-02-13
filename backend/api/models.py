@@ -48,8 +48,11 @@ class Resume(Base):
 
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    # Relationship
+    file_path = Column(String, nullable=False)
+    file_type = Column(String)
+
     user = relationship("User", back_populates="resumes")
+
 
 
 # =========================
