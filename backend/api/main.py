@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from .database import engine, SessionLocal
 from .models import Base, Resume, Job
 from .embedding_service import generate_embedding
+from .security import get_current_user
+
 
 app = FastAPI()
 

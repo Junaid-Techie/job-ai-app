@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [resumeId, setResumeId] = useState<number | null>(null);
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -24,30 +25,71 @@ export default function Dashboard() {
   if (status === "loading") return null;
   if (!session) return null;
 
+  const token = session.accessToken;
+
   const addResume = async () => {
     if (!resume) return;
+    if (!token) {
+      setError("Authentication token missing.");
+      return;
+    }
+
     setLoading(true);
+    setError("");
 
-    const response = await fetch(
-      `${API_URL}/add-resume/?content=${encodeURIComponent(resume)}`,
-      { method: "POST" }
-    );
+    try {
+      const response = await fetch(`${API_URL}/add-resume/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: resume }),
+      });
 
-    const data = await response.json();
-    setResumeId(data.resume_id);
+      if (!response.ok) {
+        throw new Error("Failed to add resume");
+      }
+
+      const data = await response.json();
+      setResumeId(data.resume_id);
+    } catch (err: any) {
+      setError(err.message);
+    }
+
     setLoading(false);
   };
 
   const matchJobs = async () => {
     if (!resumeId) return;
+    if (!token) {
+      setError("Authentication token missing.");
+      return;
+    }
+
     setLoading(true);
+    setError("");
 
-    const response = await fetch(
-      `${API_URL}/match-jobs/${resumeId}`
-    );
+    try {
+      const response = await fetch(
+        `${API_URL}/match-jobs/${resumeId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    const data = await response.json();
-    setMatches(data);
+      if (!response.ok) {
+        throw new Error("Failed to match jobs");
+      }
+
+      const data = await response.json();
+      setMatches(data);
+    } catch (err: any) {
+      setError(err.message);
+    }
+
     setLoading(false);
   };
 
@@ -59,11 +101,18 @@ export default function Dashboard() {
       className="space-y-10"
     >
       <h1 className="text-3xl font-semibold">
-        Welcome, {session.user?.name}
+        Welcome, {session.user?.email}
       </h1>
+
+      {error && (
+        <div className="bg-red-500/20 text-red-400 p-3 rounded text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
+        {/* Resume Panel */}
         <div className="glass-panel p-8 rounded-2xl shadow-2xl space-y-6">
           <textarea
             className="w-full p-4 rounded-xl bg-gray-900 border border-gray-700 text-sm"
@@ -75,19 +124,20 @@ export default function Dashboard() {
 
           <button
             onClick={addResume}
-            className="w-full py-3 bg-white text-black rounded-xl"
+            className="w-full py-3 bg-white text-black rounded-xl hover:opacity-90 transition"
           >
             {loading ? "Processing..." : "Add Resume"}
           </button>
 
           <button
             onClick={matchJobs}
-            className="w-full py-3 bg-gray-700 rounded-xl"
+            className="w-full py-3 bg-gray-700 rounded-xl hover:opacity-90 transition"
           >
             Match Jobs
           </button>
         </div>
 
+        {/* Results Panel */}
         <div className="space-y-6">
           {loading && (
             <>

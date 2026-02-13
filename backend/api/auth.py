@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from pydantic import BaseModel, EmailStr
 from .database import get_db
 from .models import User
+from .security import create_access_token
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -59,7 +60,16 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     if not user or not user.verify_password(data.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    return {
-        "id": user.id,
+    access_token = create_access_token({
+        "sub": str(user.id),
         "email": user.email
+    })
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "email": user.email
+        }
     }
