@@ -63,105 +63,126 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        🚀 Job AI Matcher
-      </h1>
+    <div className="min-h-screen bg-gray-50 px-6 py-10">
+      <div className="max-w-6xl mx-auto">
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        {/* Left Panel */}
-        <div className="md:col-span-1 bg-white p-6 rounded-xl shadow">
-          <h2 className="font-semibold mb-3">Resume</h2>
-
-          <textarea
-            className="w-full border p-3 rounded mb-4 text-sm"
-            rows={6}
-            placeholder="Paste your resume here..."
-            value={resume}
-            onChange={(e) => setResume(e.target.value)}
-          />
-
-          <button
-            onClick={addResume}
-            disabled={!resume || loading}
-            className="w-full bg-gray-800 text-white py-2 rounded mb-4"
-          >
-            {loading ? "Processing..." : "Add Resume"}
-          </button>
-
-          <h2 className="font-semibold mb-3">Filters</h2>
-
-          <select
-            className="w-full border p-2 rounded mb-3"
-            onChange={(e) =>
-              setFilters({ ...filters, work_mode: e.target.value })
-            }
-          >
-            <option value="">Work Mode</option>
-            <option value="remote">Remote</option>
-            <option value="hybrid">Hybrid</option>
-            <option value="onsite">Onsite</option>
-          </select>
-
-          <input
-            type="number"
-            placeholder="Minimum Salary"
-            className="w-full border p-2 rounded mb-3"
-            onChange={(e) =>
-              setFilters({ ...filters, min_salary: e.target.value })
-            }
-          />
-
-          <button
-            onClick={matchJobs}
-            disabled={!resumeId || loading}
-            className="w-full bg-gray-700 text-white py-2 rounded"
-          >
-            {loading ? "Matching..." : "Match Jobs"}
-          </button>
-
-          {error && (
-            <div className="mt-3 text-red-500 text-sm">{error}</div>
-          )}
+        {/* Header */}
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold text-gray-900">
+            🚀 Job AI Matcher
+          </h1>
+          <p className="text-gray-500 mt-2">
+            Semantic job intelligence powered by vector search.
+          </p>
         </div>
 
-        {/* Right Panel */}
-        <div className="md:col-span-2">
-          <div className="space-y-4">
+        {/* Main Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+          {/* Left Card */}
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-6">
+            
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                Resume
+              </h2>
+
+              <textarea
+                className="w-full border border-gray-300 rounded-lg p-4 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800"
+                rows={6}
+                placeholder="Paste your resume here..."
+                value={resume}
+                onChange={(e) => setResume(e.target.value)}
+              />
+            </div>
+
+            <button
+              onClick={addResume}
+              disabled={!resume || loading}
+              className="w-full bg-gray-900 text-white py-3 rounded-lg hover:bg-gray-800 transition disabled:opacity-40"
+            >
+              {loading ? "Processing..." : "Add Resume"}
+            </button>
+
+            <div>
+              <h2 className="text-lg font-semibold text-gray-800 mb-3">
+                Filters
+              </h2>
+
+              <div className="space-y-4">
+                <select
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm"
+                  onChange={(e) =>
+                    setFilters({ ...filters, work_mode: e.target.value })
+                  }
+                >
+                  <option value="">Work Mode</option>
+                  <option value="remote">Remote</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="onsite">Onsite</option>
+                </select>
+
+                <input
+                  type="number"
+                  placeholder="Minimum Salary"
+                  className="w-full border border-gray-300 rounded-lg p-3 text-sm"
+                  onChange={(e) =>
+                    setFilters({ ...filters, min_salary: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={matchJobs}
+              disabled={!resumeId || loading}
+              className="w-full bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-600 transition disabled:opacity-40"
+            >
+              {loading ? "Matching..." : "Match Jobs"}
+            </button>
+
+            {error && (
+              <div className="text-sm text-red-500">{error}</div>
+            )}
+          </div>
+
+          {/* Right Results */}
+          <div className="space-y-6">
+            {matches.length === 0 && !loading && (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-gray-500">
+                No matches yet. Add resume and apply filters.
+              </div>
+            )}
+
             {matches.map((job) => (
               <div
                 key={job.job_id}
-                className="bg-white p-6 rounded-xl shadow hover:shadow-md transition"
+                className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition"
               >
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-lg">{job.title}</h3>
-                  <span className="text-sm font-semibold text-gray-700">
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {job.title}
+                  </h3>
+                  <span className="text-sm font-medium text-gray-700">
                     {job.similarity_score}%
                   </span>
                 </div>
 
-                {/* Match Bar */}
                 <div className="w-full bg-gray-200 h-2 rounded">
                   <div
-                    className="bg-gray-800 h-2 rounded"
+                    className="bg-gray-900 h-2 rounded"
                     style={{ width: `${job.similarity_score}%` }}
                   />
                 </div>
 
-                <div className="mt-3 text-sm text-gray-600">
+                <div className="mt-4 text-sm text-gray-600 space-y-1">
                   <p>📍 {job.location || "Location not specified"}</p>
                   <p>💼 {job.work_mode || "Work mode not specified"}</p>
                 </div>
               </div>
             ))}
-
-            {matches.length === 0 && !loading && (
-              <p className="text-gray-500">
-                No matches yet. Add resume and apply filters.
-              </p>
-            )}
           </div>
+
         </div>
       </div>
     </div>
