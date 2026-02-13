@@ -102,3 +102,4 @@ git add .
 git commit -m "fixed cors for production frontend"
 git push
 git status
+git status
