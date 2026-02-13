@@ -12,9 +12,9 @@
 
 ## 🧠 Overview
 
-**Job AI Matcher** is a full-stack AI-powered application that uses vector embeddings and semantic similarity search to intelligently match resumes with relevant job opportunities.
+**Job AI Matcher** is a full-stack AI-powered web application that uses vector embeddings and semantic similarity search to intelligently match resumes with relevant job opportunities.
 
-Instead of relying on keyword matching, this system leverages:
+Unlike traditional keyword-based filtering, this platform uses:
 
 - OpenAI Embeddings (`text-embedding-3-small`)
 - PostgreSQL + pgvector
@@ -22,20 +22,20 @@ Instead of relying on keyword matching, this system leverages:
 - Supabase (Free Tier)
 - Next.js frontend
 
-This project demonstrates production-grade AI system architecture with scalable semantic search.
+This project demonstrates production-grade AI system architecture with scalable semantic search and real-world SaaS structure.
 
 ---
 
 ## ✨ Key Features
 
 ✔ AI-powered semantic job matching  
-✔ Resume and job embedding storage (1536-d vectors)  
+✔ Resume & job embedding storage (1536-d vectors)  
 ✔ Vector similarity ranking using pgvector  
-✔ Similarity score transformation  
-✔ Cloud-hosted PostgreSQL database  
-✔ Clean API architecture  
+✔ Structured job filtering (remote, salary, type, etc.)  
+✔ Clean REST API architecture  
+✔ Modern frontend dashboard (Next.js + Tailwind)  
 ✔ Secure API key handling  
-✔ Free-tier cloud deployment architecture  
+✔ Free-tier cloud deployment ready  
 
 ---
 
@@ -89,111 +89,120 @@ Lower distance → Higher similarity.
 
 ---
 
-## 🛠 Tech Stack
+# 📂 Project Structure (Monorepo)
 
-### Backend
+```
+job-ai-app/
+│
+├── backend/
+│   ├── api/
+│   │   ├── main.py
+│   │   ├── database.py
+│   │   ├── models.py
+│   │   ├── embedding_service.py
+│   │
+│   ├── requirements.txt
+│   ├── dev-commands.txt
+│   └── venv/
+│
+├── frontend/
+│   ├── app/
+│   ├── public/
+│   ├── package.json
+│   └── ...
+│
+└── README.md
+```
+
+---
+
+# 🛠 Tech Stack
+
+## Backend
 - FastAPI
 - SQLAlchemy
 - pgvector
 - psycopg2
 - python-dotenv
 
-### Database
+## Database
 - Supabase PostgreSQL (Free Tier)
 - pgvector extension enabled
 
-### AI
+## AI
 - OpenAI Embeddings API
 - Model: `text-embedding-3-small`
 - 1536-dimension vectors
 
-### Frontend
+## Frontend
 - Next.js (App Router)
+- TypeScript
 - Tailwind CSS
-- Vercel deployment ready
 
 ---
 
-## 📂 Project Structure
-
-```
-job-ai-app/
-│
-├── api/
-│   ├── main.py
-│   ├── database.py
-│   ├── models.py
-│   ├── embedding_service.py
-│
-├── .env
-├── requirements.txt
-├── .gitignore
-```
+# 🚀 Local Development Setup
 
 ---
 
-## 🚀 Getting Started
-
-### 1️⃣ Clone Repository
+## 🔹 1. Clone Repository
 
 ```bash
 git clone https://github.com/yourusername/job-ai-app.git
 cd job-ai-app
 ```
 
-### 2️⃣ Create Virtual Environment
+---
+
+## 🔹 2. Backend Setup
 
 ```bash
+cd backend
 python -m venv venv
 venv\Scripts\activate
-```
-
-### 3️⃣ Install Dependencies
-
-```bash
 pip install -r requirements.txt
 ```
 
----
-
-## 🔐 Environment Variables
-
-Create `.env` file:
+Create `.env` file inside `backend/`:
 
 ```
 DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@HOST:5432/postgres
 OPENAI_API_KEY=sk-xxxxxxxxxxxx
 ```
 
-⚠ Never commit secrets.
-
----
-
-## 🗄 Database Setup (Supabase)
-
-Enable vector extension:
-
-```sql
-create extension if not exists vector;
-```
-
----
-
-## 🧪 Run Backend
+Run backend:
 
 ```bash
 python -m uvicorn api.main:app --reload
 ```
 
-Access API Docs:
+Backend runs at:
 
 ```
-http://127.0.0.1:8000/docs
+http://127.0.0.1:8000
 ```
 
 ---
 
-## 📌 API Endpoints
+## 🔹 3. Frontend Setup
+
+Open a new terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Frontend runs at:
+
+```
+http://localhost:3000
+```
+
+---
+
+# 📌 API Endpoints
 
 ### ➤ Add Resume
 ```
@@ -210,49 +219,60 @@ POST /add-job/
 GET /match-jobs/{resume_id}
 ```
 
+Supports filters:
+- work_mode
+- min_salary
+- job_type
+- location
+- experience_level
+- sponsorship_required
+- posted_within_days
+
 ---
 
-## 🔒 Security
+# 🔒 Security
 
 - `.env` excluded from Git
 - OpenAI billing cap enforced
 - GitHub secret scanning protection enabled
 - Clean commit hygiene
+- Backend and frontend separated
 
 ---
 
-## 💡 Why This Project Stands Out
+# 🌍 Deployment Strategy (Free Tier)
 
-This project demonstrates:
-
-- Real-world vector database usage
-- Production-level AI integration
-- Secure cloud architecture
-- Full-stack system design
-- Scalable SaaS-ready structure
-
-It is not a demo script — it is an AI-backed recommendation engine.
+Frontend → Vercel  
+Backend → Render (Free Web Service)  
+Database → Supabase (Free Tier)  
+AI → OpenAI (Usage capped)
 
 ---
 
-## 📈 Roadmap
+# 📈 Roadmap
 
 - Resume PDF upload & parsing
 - Live job ingestion (Remotive / Adzuna APIs)
 - Cover letter generator
 - User authentication
-- Job preference filters
-- Automated job application system
+- Commute intelligence
 - SaaS subscription model
+- Auto job application workflow
 
 ---
 
-## 🌍 Deployment Strategy (Free Tier)
+# 💡 Why This Project Stands Out
 
-- Frontend → Vercel
-- Backend → Render (Free Web Service)
-- Database → Supabase Free Tier
-- AI → OpenAI (Usage capped)
+This project demonstrates:
+
+- Real-world vector database usage
+- Production-level AI integration
+- Full-stack SaaS architecture
+- Secure environment management
+- Modern frontend-backend separation
+- Scalable semantic search system
+
+It is not a demo script — it is an AI-backed recommendation engine.
 
 ---
 
