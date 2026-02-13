@@ -1,16 +1,15 @@
-# Virtual Environment
-venv/
+# Backend
+backend/venv/
+backend/__pycache__/
+backend/api/__pycache__/
+backend/.env
 
-# Python cache
+# Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+
+# General
+.env
 __pycache__/
 *.pyc
-
-# Environment variables
-.env
-
-# VS Code
-.vscode/
-
-# OS files
-.DS_Store
-Thumbs.db

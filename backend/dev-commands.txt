@@ -48,3 +48,16 @@ git status
 git add .
 git commit -m "Added Semantic matching and OpenAI embeddings Integration"
 git push
+Get-History | ForEach-Object { $_.CommandLine } | Out-File dev-commands.txt
+git status
+git add .
+git commit -m "added an initial readme"
+git push
+python -m uvicorn api.main:app --reload
+git status
+git add .
+git status
+git commit -m "pushing the changes"
+git push
+deactivate
+npx create-next-app@latest frontend
