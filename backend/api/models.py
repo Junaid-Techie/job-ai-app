@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, Boolean, Float, DateTime
 from pgvector.sqlalchemy import Vector
 from datetime import datetime
-from passlib.hash import bcrypt
+from passlib.context import CryptContext
 from .database import Base
 
 
@@ -48,6 +48,7 @@ class Job(Base):
 # =========================
 # User Model (NEW)
 # =========================
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 class User(Base):
     __tablename__ = "users"
@@ -57,11 +58,9 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    # Verify password
     def verify_password(self, password: str) -> bool:
-        return bcrypt.verify(password, self.hashed_password)
+        return pwd_context.verify(password, self.hashed_password)
 
-    # Hash password
     @staticmethod
     def hash_password(password: str) -> str:
-        return bcrypt.hash(password)
+        return pwd_context.hash(password)
