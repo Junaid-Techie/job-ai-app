@@ -1,24 +1,31 @@
 "use client";
 
-import { signIn } from "next-auth/react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Login() {
+export default function Register() {
+  const router = useRouter();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
-    await signIn("credentials", {
-      email,
-      password,
-      callbackUrl: "/dashboard",
+  const handleRegister = async () => {
+    await fetch(`${API_URL}/auth/register`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
     });
+
+    router.push("/login");
   };
 
   return (
     <div className="relative z-20 max-w-md mx-auto py-20">
       <div className="glass-panel p-8 rounded-2xl shadow-2xl">
-        <h2 className="text-2xl mb-6">Login</h2>
+        <h2 className="text-2xl mb-6">Create Account</h2>
 
         <input
           type="email"
@@ -35,10 +42,10 @@ export default function Login() {
         />
 
         <button
-          onClick={handleLogin}
+          onClick={handleRegister}
           className="w-full bg-white text-black py-3 rounded-lg hover:opacity-90 transition"
         >
-          Sign In
+          Create Account
         </button>
       </div>
     </div>

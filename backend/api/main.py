@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from .auth import router as auth_router
 from datetime import datetime, timedelta
 
 from .database import engine, SessionLocal
@@ -8,6 +9,8 @@ from .models import Base, Resume, Job
 from .embedding_service import generate_embedding
 
 app = FastAPI()
+
+app.include_router(auth_router)
 
 # Enable CORS for frontend
 app.add_middleware(

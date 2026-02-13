@@ -49,3 +49,9 @@ body {
 .animate-float-slow {
   animation: float 15s ease-in-out infinite;
 }
+
+.glass-panel {
+  backdrop-filter: blur(20px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}

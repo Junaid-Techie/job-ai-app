@@ -10,17 +10,34 @@ const handler = NextAuth({
         password: {},
       },
       async authorize(credentials) {
-        if (
-          credentials?.email === "admin@example.com" &&
-          credentials?.password === "password"
-        ) {
-          return {
-            id: "1",
-            name: "Junaid",
-            email: credentials.email,
-          };
+        if (!credentials?.email || !credentials?.password) {
+          return null;
         }
-        return null;
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          }
+        );
+
+        if (!res.ok) {
+          return null;
+        }
+
+        const user = await res.json();
+
+        return {
+          id: user.id,
+          email: user.email,
+        };
       },
     }),
   ],
