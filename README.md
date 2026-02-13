@@ -1,7 +1,7 @@
-# Job AI Matcher  
+# 🚀 Job AI Matcher  
 ### AI-Powered Semantic Job Intelligence Platform
 
-![Typing SVG](https://readme-typing-svg.herokuapp.com?size=22&duration=3000&color=6B7280&lines=Semantic+Job+Matching;Vector+Database+Powered;OpenAI+Embedding+Driven;Production+Cloud+Architecture)
+![Typing SVG](https://readme-typing-svg.herokuapp.com?size=22&duration=3500&color=6B7280&lines=Semantic+Job+Matching;Vector+Database+Powered;OpenAI+Embedding+Driven;Cloud-Native+Architecture)
 
 [![Python](https://img.shields.io/badge/Python-3.11-4b5563?style=flat)]()
 [![FastAPI](https://img.shields.io/badge/FastAPI-Backend-374151?style=flat)]()
@@ -13,17 +13,17 @@
 
 ---
 
-## Live Application
+## 🌍 Live Application
 
 Frontend  
-https://job-ai-app-six.vercel.app  
+👉 https://job-ai-app-six.vercel.app  
 
 Backend API Docs  
-https://job-ai-app-backend.onrender.com/docs  
+👉 https://job-ai-app-backend.onrender.com/docs  
 
 ---
 
-## Vision
+# 🧠 Vision
 
 Job AI Matcher is built to evolve into a fully autonomous AI-powered job intelligence platform.
 
@@ -33,7 +33,7 @@ Instead of keyword-based searching, it understands meaning through vector embedd
 
 ---
 
-## The Core Problem
+# 🎯 The Core Problem
 
 Traditional job platforms:
 
@@ -44,51 +44,52 @@ Traditional job platforms:
 
 This system introduces:
 
-- Resume semantic understanding  
-- Embedding-based similarity ranking  
-- Structured filtering  
-- Production-ready cloud deployment  
+✔ Resume semantic understanding  
+✔ AI-powered similarity ranking  
+✔ Structured filtering  
+✔ Production-ready cloud deployment  
 
 ---
 
-## Architecture Overview
+# 🏗 Architecture Overview
 
 ```
 ┌───────────────────────────┐
-│       Frontend            │
+│       🌐 Frontend         │
 │     Next.js (Vercel)      │
 └───────────────┬───────────┘
                 ↓
 ┌───────────────────────────┐
-│        Backend            │
+│        ⚙ Backend          │
 │    FastAPI (Render)       │
 └───────────────┬───────────┘
                 ↓
 ┌───────────────────────────┐
-│     OpenAI Embeddings     │
+│      🤖 OpenAI            │
+│     Embeddings API        │
 └───────────────┬───────────┘
                 ↓
 ┌───────────────────────────┐
-│ PostgreSQL + pgvector     │
-│    Supabase (Cloud)       │
+│   🗄 PostgreSQL + pgvector│
+│      Supabase (Cloud)     │
 └───────────────────────────┘
 ```
 
 ---
 
-## How It Works
+# 🔬 How It Works
 
 ### 1️⃣ Resume Intelligence  
-Resume text → OpenAI → 1536-dimensional embedding
+Resume text → OpenAI → 1536-dimension embedding  
 
 ### 2️⃣ Job Intelligence  
-Job title + description → embedding stored in PostgreSQL
+Job title + description → stored as embedding  
 
 ### 3️⃣ Semantic Matching  
-Vector similarity search using pgvector L2 distance
+Vector similarity search using pgvector L2 distance  
 
 ### 4️⃣ Ranking  
-Distance converted into similarity percentage
+Distance converted into similarity percentage  
 
 ### 5️⃣ Structured Filtering  
 Filters include:
@@ -102,7 +103,7 @@ Filters include:
 
 ---
 
-## Similarity Formula
+# 🧮 Similarity Formula
 
 ```
 similarity_score = (1 / (1 + distance)) * 100
@@ -112,7 +113,7 @@ Lower distance → Higher semantic relevance.
 
 ---
 
-## Example Match Output
+# 📊 Example Match Output
 
 ```json
 [
@@ -126,7 +127,7 @@ Lower distance → Higher semantic relevance.
 
 ---
 
-## Execution Flow (Backend Perspective)
+# ⚙ Execution Flow (Backend Perspective)
 
 ```bash
 > Resume Uploaded
@@ -139,9 +140,9 @@ Lower distance → Higher semantic relevance.
 
 ---
 
-## Technology Stack
+# 🛠 Technology Stack
 
-### Backend
+## Backend
 - FastAPI  
 - SQLAlchemy ORM  
 - pgvector  
@@ -149,18 +150,18 @@ Lower distance → Higher semantic relevance.
 - OpenAI SDK  
 - Environment-based configuration  
 
-### Database
+## Database
 - Supabase PostgreSQL (Free Tier)  
-- Session Pooler (IPv4-compatible)  
+- Session Pooler (IPv4 compatible)  
 - Vector extension enabled  
 
-### Frontend
+## Frontend
 - Next.js (App Router)  
 - TypeScript  
 - Tailwind CSS  
 - Environment-aware API integration  
 
-### Deployment
+## Deployment
 - Backend → Render  
 - Frontend → Vercel  
 - Database → Supabase  
@@ -168,7 +169,7 @@ Lower distance → Higher semantic relevance.
 
 ---
 
-## Monorepo Structure
+# 📂 Monorepo Structure
 
 ```
 job-ai-app/
@@ -188,58 +189,90 @@ job-ai-app/
 
 ---
 
-## What This Project Demonstrates
+# 🧪 What This Project Demonstrates
 
-- Vector database integration  
-- Embedding-based semantic search  
-- Production cloud deployment  
-- Monorepo architecture  
-- Cross-origin production configuration  
-- Secure environment variable management  
-- IPv4 vs IPv6 deployment debugging  
-- Real-world troubleshooting workflow  
+✔ Vector database integration  
+✔ Semantic similarity search  
+✔ Embedding-based ranking system  
+✔ Full-stack cloud deployment  
+✔ Monorepo architecture  
+✔ Cross-origin production setup  
+✔ Secret management best practices  
+✔ IPv4 vs IPv6 deployment debugging  
+✔ Production troubleshooting workflow  
 
 ---
 
-## Production Challenges Solved
+<details>
+<summary>🔎 Technical Deep Dive (Click to Expand)</summary>
+
+### Embedding Pipeline
+- OpenAI `text-embedding-3-small`
+- 1536-dimension vectors
+- Stored in PostgreSQL using `Vector(1536)`
+
+### Database Query
+```python
+Job.embedding.l2_distance(resume.embedding)
+```
+
+### Why pgvector?
+- Native vector operations
+- SQL-level similarity search
+- Scalable with indexing
+- No external vector DB required
+
+### Why Session Pooler?
+Render free instances are IPv4-only.  
+Supabase direct connections prefer IPv6.  
+Using Session Pooler ensures compatibility.
+
+</details>
+
+---
+
+<details>
+<summary>🛠 Production Challenges Solved (Click to Expand)</summary>
 
 - Supabase IPv6 incompatibility with Render  
 - Switching to Session Pooler for IPv4 support  
 - CORS configuration between Vercel & Render  
 - Missing production dependencies  
-- Python runtime compatibility  
-- Git upstream conflicts  
-- Secret key rotation  
+- Python runtime compatibility pinning  
+- Git upstream branch conflicts  
+- Secret key rotation after exposure  
 
-This reflects production-grade engineering maturity.
+This reflects real production-grade debugging.
+
+</details>
 
 ---
 
-## Performance Considerations
+# ⚡ Performance Considerations
 
 - Vector similarity computed at database layer  
 - Embeddings cached in storage  
-- Stateless backend design  
+- Stateless backend  
 - Free-tier optimized architecture  
 - Ready for horizontal scaling  
 
 ---
 
-## Future Roadmap
+# 📈 Future Roadmap
 
-### Phase 1 – Intelligence
+## Phase 1 – Intelligence
 - Resume PDF parsing  
 - Skill extraction  
 - Match explanation engine  
 - Confidence scoring  
 
-### Phase 2 – Automation
+## Phase 2 – Automation
 - Live job ingestion APIs  
 - Automated job syncing  
 - Personalized recommendations  
 - Saved job tracking  
 
-### Phase 3 – SaaS Platform
+## Phase 3 – SaaS Platform
 - User authentication  
 - Resume management  
 - Application tracking dashboard  
@@ -249,14 +282,14 @@ This reflects production-grade engineering maturity.
 
 ---
 
-## Long-Term Vision
+# 🎯 Long-Term Vision
 
 > A fully autonomous AI job agent  
 > That understands user profiles, tracks opportunities, ranks relevance, and automates the application pipeline.
 
 ---
 
-## Engineering Philosophy
+# 🧠 Engineering Philosophy
 
 This project is intentionally designed to:
 
@@ -269,7 +302,7 @@ This project is intentionally designed to:
 
 ---
 
-## Why This Project Stands Out
+# 🏆 Why This Project Stands Out
 
 This is not a tutorial demo.
 
@@ -285,12 +318,12 @@ It reflects real engineering practice.
 
 ---
 
-## Author
+# 👨‍💻 Author
 
 Built as a production-ready AI system demonstrating semantic search, vector database integration, and scalable cloud architecture.
 
 ---
 
-## License
+# 📜 License
 
 MIT License
