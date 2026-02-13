@@ -1,0 +1,104 @@
+try { . "c:\Users\mjuna\AppData\Local\Programs\Microsoft VS Code\591199df40\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+& C:/Users/mjuna/job-ai-app/venv/Scripts/Activate.ps1
+deactivate
+np -v
+node -v
+cd ..
+rename job-ai-app backend
+rename job-ai-app backend
+rename .\job-ai-app\ backend
+cd .\job-ai-app\
+npx create-next-app@latest frontend
+cd .\backend\
+venv\Scripts\Activate
+python -m uvicorn api.main:app --reload
+deactivate
+cd ..
+cd .\frontend\
+npm run dev
+git status
+cd ..
+git branch
+git checkout -b backup-2026-02-12
+git push -u origin backup-2026-02-12
+git branch
+git branch -M main
+git branch
+git add -A
+git checkout main
+git add -A
+git status
+git commit -m "Restructured project into backend and frontend monorepo"
+git push
+git remote -v
+git branch -vv
+git puch -u origin main
+git push -u origin main
+venv\Scripts\Activate
+cd .\backend\
+venv\Scripts\Activate
+pip freeze > requirements.txt
+deactivate
+rmdir /s /q venv
+python -m venv venv
+venv\Scripts\Activate
+pip install fastapi uvicorn sqlalchemy psycopg2-binary pgvector python-dotenv openai
+cd ..
+git status
+git add .
+git status
+git commit -m "Rebuilt backend env and fixed the dependecies"
+git push -u origin main
+git push pupsh
+git status
+git push
+git branch --unset-upstream
+git branch --set-upstream-to=origin/main main
+git push
+git status
+git add .
+git commit -m "Rebuilt backend env and fixed the dependecies"
+git push
+git pull --rebase origin main
+git push
+pip freeze > requirements.txt
+pip install sqlalchemy psycopg2-binary pgvector python-dotenv openai
+cd .\backend\
+dea
+cd . 
+deac
+cd 
+git status
+cd .\job-ai-app\
+git status
+deacti
+deactivate
+git status
+git pull --rebase origin main
+git status
+git add .
+git status
+git status
+git pull --rebase origin main
+git status
+git status
+git pull --rebase origin main
+git status
+cd .\frontend\
+ls
+npm run dev
+npm run dev
+cd .
+git status
+git add .
+git status
+git commit -m "integrating local hosted fronted with backend on render"
+git status
+git push
+cd . 
+cd ..
+git status
+git add .
+git commit -m "fixed cors for production frontend"
+git push
+git status
