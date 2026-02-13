@@ -3,38 +3,57 @@
 import { useState } from "react";
 
 export default function Home() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const [resume, setResume] = useState("");
   const [resumeId, setResumeId] = useState<number | null>(null);
   const [matches, setMatches] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const addResume = async () => {
     if (!resume) return;
 
     setLoading(true);
+    setError("");
 
-    const response = await fetch(
-      `http://127.0.0.1:8000/add-resume/?content=${encodeURIComponent(resume)}`,
-      { method: "POST" }
-    );
+    try {
+      const response = await fetch(
+        `${API_URL}/add-resume/?content=${encodeURIComponent(resume)}`,
+        { method: "POST" }
+      );
 
-    const data = await response.json();
-    setResumeId(data.resume_id);
-    setLoading(false);
+      if (!response.ok) throw new Error("Failed to add resume");
+
+      const data = await response.json();
+      setResumeId(data.resume_id);
+    } catch (err: any) {
+      setError("Error adding resume. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const matchJobs = async () => {
     if (!resumeId) return;
 
     setLoading(true);
+    setError("");
 
-    const response = await fetch(
-      `http://127.0.0.1:8000/match-jobs/${resumeId}`
-    );
+    try {
+      const response = await fetch(
+        `${API_URL}/match-jobs/${resumeId}`
+      );
 
-    const data = await response.json();
-    setMatches(data);
-    setLoading(false);
+      if (!response.ok) throw new Error("Failed to match jobs");
+
+      const data = await response.json();
+      setMatches(data);
+    } catch (err: any) {
+      setError("Error matching jobs. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -70,14 +89,15 @@ export default function Home() {
         </div>
 
         {/* Buttons */}
-        <div className="flex gap-4 mb-8">
+        <div className="flex gap-4 mb-6">
           <button
             onClick={addResume}
-            disabled={!resume}
+            disabled={!resume || loading}
             className={`px-6 py-3 rounded-xl font-semibold shadow-md transition 
-              ${resume
-                ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ${
+                !resume || loading
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-indigo-600 hover:bg-indigo-700 text-white"
               }`}
           >
             {loading ? "Processing..." : "Add Resume"}
@@ -85,16 +105,24 @@ export default function Home() {
 
           <button
             onClick={matchJobs}
-            disabled={!resumeId}
+            disabled={!resumeId || loading}
             className={`px-6 py-3 rounded-xl font-semibold shadow-md transition 
-              ${resumeId
-                ? "bg-green-600 hover:bg-green-700 text-white"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              ${
+                !resumeId || loading
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700 text-white"
               }`}
           >
             {loading ? "Matching..." : "Match Jobs"}
           </button>
         </div>
+
+        {/* Error Message */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-600 rounded-lg">
+            {error}
+          </div>
+        )}
 
         {/* Results */}
         <div>
@@ -123,12 +151,13 @@ export default function Home() {
                 <div className="text-gray-500 text-sm space-y-1">
                   <p>📍 {job.location || "Location not specified"}</p>
                   <p>💼 {job.work_mode || "Work mode not specified"}</p>
+                  <p>💰 {job.salary_min ? `$${job.salary_min}` : "Salary not specified"}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {matches.length === 0 && !loading && (
+          {matches.length === 0 && !loading && !error && (
             <p className="text-gray-400 text-center mt-4">
               No matches yet. Add resume and click Match Jobs.
             </p>
