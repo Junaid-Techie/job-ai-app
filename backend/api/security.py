@@ -5,6 +5,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
 
 SECRET_KEY = os.getenv("JWT_SECRET", "fallbacksecret")
+if not SECRET_KEY:
+    raise RuntimeError("JWT_SECRET environment variable not set")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
