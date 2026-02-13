@@ -1,4 +1,5 @@
 import "./globals.css";
+import Providers from "./providers";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Background from "./components/Background";
@@ -10,11 +11,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="relative min-h-screen bg-gray-950 text-white overflow-x-hidden">
-        <Background />
-        <Navbar />
-        <main className="relative z-10">{children}</main>
-        <Footer />
+      <body className="min-h-screen text-white overflow-x-hidden">
+        <Providers>
+          <Background />
+          <div className="relative z-10 flex flex-col min-h-screen">
+            <Navbar />
+            <main className="flex-1 px-6 py-10 max-w-6xl mx-auto">
+              {children}
+            </main>
+            <Footer />
+          </div>
+        </Providers>
       </body>
     </html>
   );
