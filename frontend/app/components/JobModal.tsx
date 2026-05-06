@@ -1,6 +1,12 @@
 "use client";
 
-export default function JobModal({ job, onClose }: any) {
+interface Job {
+  title: string;
+  similarity_score: number;
+  [key: string]: unknown;
+}
+
+export default function JobModal({ job, onClose }: { job: Job | null; onClose: () => void }) {
   if (!job) return null;
 
   return (

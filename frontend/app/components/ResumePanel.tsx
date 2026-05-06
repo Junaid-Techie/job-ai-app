@@ -6,7 +6,13 @@ export default function ResumePanel({
   addResume,
   matchJobs,
   loading,
-}: any) {
+}: {
+  resume: string;
+  setResume: (val: string) => void;
+  addResume: () => void;
+  matchJobs: () => void;
+  loading: boolean;
+}) {
   return (
     <div className="backdrop-blur-xl bg-white/5 border border-white/10 p-8 rounded-2xl space-y-6 shadow-xl">
       <textarea

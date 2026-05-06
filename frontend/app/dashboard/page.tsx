@@ -13,7 +13,7 @@ export default function Dashboard() {
   const [resume, setResume] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeId, setResumeId] = useState<number | null>(null);
-  const [matches, setMatches] = useState<any[]>([]);
+  const [matches, setMatches] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -77,8 +77,12 @@ export default function Dashboard() {
       const data = await response.json();
       setResumeId(data.resume_id);
       alert("Resume successfully uploaded & embedded!");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An error occurred");
+      }
     }
 
     setLoading(false);
@@ -115,8 +119,12 @@ export default function Dashboard() {
 
       const data = await response.json();
       setMatches(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An error occurred");
+      }
     }
 
     setLoading(false);
