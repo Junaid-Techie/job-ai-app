@@ -31,7 +31,7 @@ def extract_text(file: UploadFile):
 
     else:
         raise HTTPException(status_code=400, detail="Unsupported file type")
-
+ #
 
 @router.post("/upload-resume")
 def upload_resume(
