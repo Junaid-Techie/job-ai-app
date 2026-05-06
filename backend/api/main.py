@@ -97,7 +97,12 @@ def add_job(
     company_size: str = "",
     industry: str = "",
     db: Session = Depends(SessionLocal),
+    admin_secret: str = Header(None, description="Secret key for admin operations"),
 ):
+    import os
+    expected_secret = os.getenv("ADMIN_SECRET", "supersecretadmin")
+    if admin_secret != expected_secret:
+        raise HTTPException(status_code=403, detail="Unauthorized access to add job")
     try:
         combined_text = f"{title}\n{description}"
         embedding = generate_embedding(combined_text)

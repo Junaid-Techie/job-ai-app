@@ -49,9 +49,14 @@ def upload_resume(
 
     file.file.seek(0)
     extracted_text = extract_text(file)
+    
+    # Generate Embedding for Semantic Match
+    from .embedding_service import generate_embedding
+    embedding = generate_embedding(extracted_text)
 
     new_resume = Resume(
         content=extracted_text,
+        embedding=embedding,
         user_id=user_id,
         file_path=file_path,
         file_type=file.filename.split(".")[-1],
