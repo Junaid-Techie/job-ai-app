@@ -14,8 +14,13 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 # =========================
 
 class RegisterRequest(BaseModel):
+    first_name: str
+    last_name: str
     email: EmailStr
     password: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
 
 
 class LoginRequest(BaseModel):
@@ -35,18 +40,29 @@ def register(data: RegisterRequest, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Email already registered")
 
     new_user = User(
+        first_name=data.first_name,
+        last_name=data.last_name,
         email=data.email,
         hashed_password=User.hash_password(data.password),
     )
 
     db.add(new_user)
     db.commit()
-    db.refresh(new_user)
-
     return {
         "message": "User created successfully",
         "email": new_user.email
     }
+
+# =========================
+# Forgot Password Endpoint
+# =========================
+
+@router.post("/forgot-password")
+def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
+    # Simulating email logic for free deployment
+    # Check if user exists (optional, but good practice is to return same response regardless)
+    user = db.query(User).filter(User.email == data.email).first()
+    return {"message": "If an account with that email exists, a password reset link has been sent."}
 
 
 # =========================
