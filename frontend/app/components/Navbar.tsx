@@ -15,12 +15,15 @@ export default function Navbar() {
           <span className="text-2xl">⚡</span> Job AI Matcher
         </Link>
 
-        <div className="flex items-center gap-8 text-sm font-medium">
-          <Link href="/" className="text-gray-300 hover:text-white transition">Home</Link>
+        <div className="flex items-center gap-6 md:gap-8 text-sm font-medium">
+          <Link href="/" className="text-gray-300 hover:text-white transition hidden md:block">Home</Link>
+          <Link href="/about" className="text-gray-300 hover:text-white transition">About</Link>
+          <Link href="/features" className="text-gray-300 hover:text-white transition">Features</Link>
 
           {session ? (
             <>
               <Link href="/dashboard" className="text-gray-300 hover:text-white transition">Dashboard</Link>
+              <Link href="/profile" className="text-gray-300 hover:text-white transition">Profile</Link>
               <button 
                 onClick={() => signOut()}
                 className="px-5 py-2 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all"

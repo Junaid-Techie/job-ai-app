@@ -361,3 +361,46 @@ def get_interview_prep(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
+
+# -------------------------
+# Profile Endpoints
+# -------------------------
+from pydantic import BaseModel
+class UpdateProfileRequest(BaseModel):
+    first_name: str
+    last_name: str
+
+@app.get("/profile/")
+def get_profile(
+    db: Session = Depends(SessionLocal),
+    user=Depends(get_current_user),
+):
+    try:
+        user_id = int(user["sub"])
+        from .models import User
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"first_name": db_user.first_name, "last_name": db_user.last_name, "email": db_user.email}
+    finally:
+        db.close()
+
+@app.put("/profile/")
+def update_profile(
+    data: UpdateProfileRequest,
+    db: Session = Depends(SessionLocal),
+    user=Depends(get_current_user),
+):
+    try:
+        user_id = int(user["sub"])
+        from .models import User
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        db_user.first_name = data.first_name
+        db_user.last_name = data.last_name
+        db.commit()
+        return {"message": "Profile updated successfully"}
+    finally:
+        db.close()
