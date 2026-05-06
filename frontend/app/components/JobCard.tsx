@@ -1,6 +1,12 @@
 "use client";
 
-export default function JobCard({ job, onClick }: any) {
+interface Job {
+  title: string;
+  similarity_score: number;
+  [key: string]: unknown;
+}
+
+export default function JobCard({ job, onClick }: { job: Job; onClick: (job: Job) => void }) {
   return (
     <div
       onClick={() => onClick(job)}
