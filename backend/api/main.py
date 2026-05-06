@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from .auth import router as auth_router
 from .upload import router as upload_router
 from .database import engine, SessionLocal
-from .models import Base, Resume, Job
+from .models import Base, Resume, Job, Application
 from .embedding_service import generate_embedding
 from .security import get_current_user
 
@@ -227,5 +227,98 @@ def match_jobs(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+    finally:
+        db.close()
+
+# -------------------------
+# Auto Apply (AI Cover Letter + Tracking)
+# -------------------------
+@app.post("/auto-apply/")
+def auto_apply(
+    job_id: int,
+    resume_id: int,
+    db: Session = Depends(SessionLocal),
+    user=Depends(get_current_user),
+):
+    try:
+        user_id = int(user["sub"])
+        
+        job = db.query(Job).filter(Job.id == job_id).first()
+        resume = db.query(Resume).filter(Resume.id == resume_id, Resume.user_id == user_id).first()
+        
+        if not job or not resume:
+            raise HTTPException(status_code=404, detail="Job or Resume not found")
+            
+        existing_app = db.query(Application).filter(
+            Application.job_id == job_id, 
+            Application.user_id == user_id
+        ).first()
+        
+        if existing_app:
+            raise HTTPException(status_code=400, detail="Already applied to this job")
+
+        # Generate a cover letter using OpenAI
+        from .embedding_service import client
+        
+        prompt = f"Write a very short 3-sentence cover letter for a {job.title} position based on this resume snippet: {resume.content[:1000]}"
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert career coach writing tailored, professional, and concise cover letters."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=250
+        )
+        
+        cover_letter = response.choices[0].message.content
+
+        application = Application(
+            user_id=user_id,
+            job_id=job_id,
+            resume_id=resume_id,
+            status="APPLIED",
+            cover_letter=cover_letter
+        )
+        
+        db.add(application)
+        db.commit()
+        db.refresh(application)
+        
+        return {"status": "success", "application_id": application.id, "cover_letter": cover_letter}
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()
+
+
+# -------------------------
+# Get Applications
+# -------------------------
+@app.get("/applications/")
+def get_applications(
+    db: Session = Depends(SessionLocal),
+    user=Depends(get_current_user),
+):
+    try:
+        user_id = int(user["sub"])
+        applications = db.query(Application).filter(Application.user_id == user_id).order_by(Application.applied_at.desc()).all()
+        
+        return [
+            {
+                "id": app.id,
+                "job_title": app.job.title,
+                "job_location": app.job.location,
+                "status": app.status,
+                "applied_at": app.applied_at,
+                "cover_letter": app.cover_letter
+            }
+            for app in applications
+        ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()

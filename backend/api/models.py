@@ -81,3 +81,23 @@ class Job(Base):
     posted_date = Column(DateTime, default=datetime.utcnow)
 
     embedding = Column(Vector(1536))
+
+# =========================
+# Application Model
+# =========================
+
+class Application(Base):
+    __tablename__ = "applications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    job_id = Column(Integer, ForeignKey("jobs.id"), nullable=False)
+    resume_id = Column(Integer, ForeignKey("resumes.id"), nullable=False)
+    
+    status = Column(String, default="APPLIED") # APPLIED, INTERVIEW, REJECTED
+    cover_letter = Column(Text, nullable=True)
+    applied_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User", backref="applications")
+    job = relationship("Job", backref="applications")
+    resume = relationship("Resume", backref="applications")

@@ -3,18 +3,23 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function Dashboard() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL;
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const [activeTab, setActiveTab] = useState<"search" | "applications">("search");
+
   const [resume, setResume] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeId, setResumeId] = useState<number | null>(null);
   const [matches, setMatches] = useState<Record<string, any>[]>([]);
+  const [applications, setApplications] = useState<Record<string, any>[]>([]);
+  
   const [loading, setLoading] = useState(false);
+  const [applyingJobId, setApplyingJobId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   const [filters, setFilters] = useState({
@@ -30,10 +35,30 @@ export default function Dashboard() {
     }
   }, [status, router]);
 
-  if (status === "loading") return null;
-  if (!session) return null;
+  const token = session?.accessToken;
 
-  const token = session.accessToken;
+  const fetchApplications = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/applications/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setApplications(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "applications" && token) {
+      fetchApplications();
+    }
+  }, [activeTab, token]);
+
+  if (status === "loading" || !session) return null;
 
   const addResume = async () => {
     if (!resume && !resumeFile) return;
@@ -53,9 +78,7 @@ export default function Dashboard() {
 
         response = await fetch(`${API_URL}/upload-resume`, {
           method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
           body: formData,
         });
       } else {
@@ -63,9 +86,7 @@ export default function Dashboard() {
           `${API_URL}/add-resume/?content=${encodeURIComponent(resume)}`,
           {
             method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+            headers: { Authorization: `Bearer ${token}` },
           }
         );
       }
@@ -76,13 +97,10 @@ export default function Dashboard() {
 
       const data = await response.json();
       setResumeId(data.resume_id);
-      alert("Resume successfully uploaded & embedded!");
+      alert("Resume successfully uploaded & embedded! You can now match & auto-apply.");
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An error occurred");
-      }
+      if (err instanceof Error) setError(err.message);
+      else setError("An error occurred");
     }
 
     setLoading(false);
@@ -90,10 +108,7 @@ export default function Dashboard() {
 
   const matchJobs = async () => {
     if (!resumeId) return;
-    if (!token) {
-      setError("Authentication token missing.");
-      return;
-    }
+    if (!token) return;
 
     setLoading(true);
     setError("");
@@ -108,26 +123,46 @@ export default function Dashboard() {
       const url = `${API_URL}/match-jobs/${resumeId}?${queryParams.toString()}`;
 
       const response = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to match jobs");
-      }
+      if (!response.ok) throw new Error("Failed to match jobs");
 
       const data = await response.json();
       setMatches(data);
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An error occurred");
-      }
+      if (err instanceof Error) setError(err.message);
+      else setError("An error occurred");
     }
 
     setLoading(false);
+  };
+
+  const autoApply = async (jobId: number) => {
+    if (!resumeId || !token) return;
+    
+    setApplyingJobId(jobId);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_URL}/auto-apply/?job_id=${jobId}&resume_id=${resumeId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.detail || "Failed to auto-apply");
+      }
+
+      alert("Success! AI generated a cover letter and submitted your application.");
+      setActiveTab("applications");
+    } catch (err: unknown) {
+      if (err instanceof Error) setError(err.message);
+      else setError("An error occurred");
+    }
+
+    setApplyingJobId(null);
   };
 
   return (
@@ -135,157 +170,218 @@ export default function Dashboard() {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
-      className="space-y-10"
+      className="space-y-8"
     >
-      <h1 className="text-3xl font-semibold">
-        Welcome, {session.user?.email}
-      </h1>
+      <div className="flex justify-between items-end border-b border-gray-800 pb-4">
+        <h1 className="text-3xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+          Agent Dashboard
+        </h1>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setActiveTab("search")}
+            className={`pb-2 px-2 text-sm transition-all ${
+              activeTab === "search" ? "text-blue-400 border-b-2 border-blue-400" : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            Search & Match
+          </button>
+          <button
+            onClick={() => setActiveTab("applications")}
+            className={`pb-2 px-2 text-sm transition-all ${
+              activeTab === "applications" ? "text-blue-400 border-b-2 border-blue-400" : "text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            My Applications
+          </button>
+        </div>
+      </div>
 
       {error && (
-        <div className="bg-red-500/20 border border-red-500 text-red-400 p-4 rounded-xl text-sm">
+        <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl text-sm">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-        
-        {/* Left Column: Upload & Filters */}
-        <div className="space-y-8">
-          <div className="glass-panel p-8 rounded-2xl shadow-2xl space-y-6">
-            <h2 className="text-xl font-medium border-b border-gray-700 pb-2">1. Your Resume</h2>
-            
-            <div>
-              <label className="block text-sm text-gray-400 mb-2">Upload File (PDF/DOCX)</label>
-              <input
-                type="file"
-                accept=".pdf,.docx,.txt"
-                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-                className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-              />
-            </div>
-
-            <div className="text-center text-sm text-gray-500">OR</div>
-
-            <textarea
-              className="w-full p-4 rounded-xl bg-gray-900 border border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
-              rows={4}
-              placeholder="Paste your resume text here..."
-              value={resume}
-              onChange={(e) => setResume(e.target.value)}
-            />
-
-            <button
-              onClick={addResume}
-              disabled={loading || (!resume && !resumeFile)}
-              className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50"
-            >
-              {loading ? "Processing..." : "Submit Resume"}
-            </button>
-          </div>
-
-          <div className="glass-panel p-8 rounded-2xl shadow-2xl space-y-6">
-            <h2 className="text-xl font-medium border-b border-gray-700 pb-2">2. Match Filters</h2>
-            
-            <div className="space-y-4 text-sm">
-              <div>
-                <label className="block text-gray-400 mb-1">Min Salary ($)</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 100000"
-                  value={filters.min_salary}
-                  onChange={(e) => setFilters({ ...filters, min_salary: e.target.value })}
-                  className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700"
-                />
-              </div>
+      {activeTab === "search" && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          
+          {/* Left Column: Upload & Filters */}
+          <div className="space-y-8">
+            <div className="glass-panel p-8 rounded-2xl shadow-2xl space-y-6">
+              <h2 className="text-xl font-medium border-b border-gray-700 pb-2">1. Your Resume</h2>
               
               <div>
-                <label className="block text-gray-400 mb-1">Work Mode</label>
-                <select
-                  value={filters.work_mode}
-                  onChange={(e) => setFilters({ ...filters, work_mode: e.target.value })}
-                  className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700"
-                >
-                  <option value="">Any</option>
-                  <option value="Remote">Remote</option>
-                  <option value="Hybrid">Hybrid</option>
-                  <option value="Onsite">Onsite</option>
-                </select>
+                <label className="block text-sm text-gray-400 mb-2">Upload File (PDF/DOCX)</label>
+                <input
+                  type="file"
+                  accept=".pdf,.docx,.txt"
+                  onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30"
+                />
               </div>
 
-              <div>
-                <label className="block text-gray-400 mb-1">Job Type</label>
-                <select
-                  value={filters.job_type}
-                  onChange={(e) => setFilters({ ...filters, job_type: e.target.value })}
-                  className="w-full p-3 rounded-lg bg-gray-900 border border-gray-700"
-                >
-                  <option value="">Any</option>
-                  <option value="Full-time">Full-time</option>
-                  <option value="Contract">Contract</option>
-                </select>
-              </div>
-            </div>
+              <div className="text-center text-sm text-gray-500">OR</div>
 
-            <button
-              onClick={matchJobs}
-              disabled={loading || !resumeId}
-              className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
-            >
-              Match Jobs
-            </button>
-          </div>
-        </div>
+              <textarea
+                className="w-full p-4 rounded-xl bg-black/50 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                rows={4}
+                placeholder="Paste your resume text here..."
+                value={resume}
+                onChange={(e) => setResume(e.target.value)}
+              />
 
-        {/* Right Column: Results */}
-        <div className="lg:col-span-2 space-y-6">
-          <h2 className="text-2xl font-medium mb-6">Match Results</h2>
-          
-          {loading && (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 rounded-2xl bg-gray-800/50 animate-pulse" />
-              ))}
-            </div>
-          )}
-
-          {!loading && matches.length === 0 && resumeId && (
-             <div className="text-gray-400 text-center py-12">No matches found. Try adjusting filters or adding more jobs to the DB.</div>
-          )}
-
-          {!loading &&
-            matches.map((job) => (
-              <div
-                key={job.job_id}
-                className="glass-panel p-6 rounded-2xl shadow-xl transition transform hover:-translate-y-1 hover:shadow-2xl border border-white/5 hover:border-white/20"
+              <button
+                onClick={addResume}
+                disabled={loading || (!resume && !resumeFile)}
+                className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-semibold text-white">{job.title}</h3>
-                    <p className="text-gray-400 text-sm mt-1">
-                      {job.location || "Location unknown"} • {job.work_mode || "Flexible"}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-500">
-                      {job.similarity_score}%
-                    </span>
-                    <span className="text-xs text-gray-500">Match</span>
-                  </div>
+                {loading ? "Processing..." : "Embed & Save"}
+              </button>
+            </div>
+
+            <div className="glass-panel p-8 rounded-2xl shadow-2xl space-y-6">
+              <h2 className="text-xl font-medium border-b border-gray-700 pb-2">2. Match Filters</h2>
+              
+              <div className="space-y-4 text-sm">
+                <div>
+                  <label className="block text-gray-400 mb-1">Min Salary ($)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 100000"
+                    value={filters.min_salary}
+                    onChange={(e) => setFilters({ ...filters, min_salary: e.target.value })}
+                    className="w-full p-3 rounded-lg bg-black/50 border border-white/10"
+                  />
                 </div>
                 
-                <div className="flex gap-2 mt-4">
-                  <span className="px-3 py-1 bg-white/5 rounded-full text-xs text-gray-300">
-                    ${job.salary_min ? job.salary_min.toLocaleString() : "Unknown"}
-                  </span>
-                  <span className="px-3 py-1 bg-white/5 rounded-full text-xs text-gray-300">
-                    {job.job_type || "Full-time"}
-                  </span>
+                <div>
+                  <label className="block text-gray-400 mb-1">Work Mode</label>
+                  <select
+                    value={filters.work_mode}
+                    onChange={(e) => setFilters({ ...filters, work_mode: e.target.value })}
+                    className="w-full p-3 rounded-lg bg-black/50 border border-white/10 text-white"
+                  >
+                    <option value="">Any</option>
+                    <option value="Remote">Remote</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="Onsite">Onsite</option>
+                  </select>
                 </div>
               </div>
-            ))}
-        </div>
 
-      </div>
+              <button
+                onClick={matchJobs}
+                disabled={loading || !resumeId}
+                className="w-full py-3 bg-white text-black font-semibold rounded-xl hover:bg-gray-200 transition disabled:opacity-50"
+              >
+                Search & Match Jobs
+              </button>
+            </div>
+          </div>
+
+          {/* Right Column: Results */}
+          <div className="lg:col-span-2 space-y-6">
+            <h2 className="text-2xl font-medium mb-6">Semantic Matches</h2>
+            
+            {loading && (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="h-40 rounded-2xl bg-white/5 animate-pulse" />
+                ))}
+              </div>
+            )}
+
+            {!loading && matches.length === 0 && resumeId && (
+               <div className="text-gray-400 text-center py-12 border border-dashed border-gray-700 rounded-xl">
+                 No matches found. Try adjusting filters.
+               </div>
+            )}
+
+            {!loading &&
+              matches.map((job) => (
+                <div
+                  key={job.job_id}
+                  className="glass-panel p-6 rounded-2xl shadow-xl transition transform hover:-translate-y-1 hover:shadow-2xl border border-white/5 hover:border-white/20 flex flex-col gap-4"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">{job.title}</h3>
+                      <p className="text-gray-400 text-sm mt-1">
+                        {job.location || "Location unknown"} • {job.work_mode || "Flexible"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">
+                        {job.similarity_score}%
+                      </span>
+                      <span className="text-xs text-gray-500 uppercase tracking-widest mt-1">Match</span>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between items-end mt-2">
+                    <div className="flex gap-2">
+                      <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
+                        ${job.salary_min ? job.salary_min.toLocaleString() : "Unknown"}
+                      </span>
+                      <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
+                        {job.job_type || "Full-time"}
+                      </span>
+                    </div>
+
+                    <button 
+                      onClick={() => autoApply(job.job_id)}
+                      disabled={applyingJobId === job.job_id}
+                      className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {applyingJobId === job.job_id ? (
+                        <>
+                          <span className="animate-spin">⚙️</span> Writing Cover Letter...
+                        </>
+                      ) : (
+                        "Auto Apply with AI ⚡"
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </motion.div>
+      )}
+
+      {activeTab === "applications" && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 max-w-4xl mx-auto">
+          {applications.length === 0 ? (
+            <div className="text-center py-20 text-gray-400">
+              <div className="text-5xl mb-4">🤖</div>
+              <p>You haven't auto-applied to any jobs yet.</p>
+              <button onClick={() => setActiveTab("search")} className="mt-6 text-blue-400 hover:text-blue-300 underline underline-offset-4">Go find some matches!</button>
+            </div>
+          ) : (
+            applications.map((app) => (
+              <div key={app.id} className="glass-panel p-6 rounded-2xl border border-white/10 shadow-xl space-y-4 relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full" />
+                <div className="flex justify-between items-start relative z-10">
+                  <div>
+                    <h3 className="text-xl font-semibold text-white">{app.job_title}</h3>
+                    <p className="text-gray-400 text-sm mt-1">Applied on {new Date(app.applied_at).toLocaleDateString()}</p>
+                  </div>
+                  <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-full text-xs font-bold tracking-wider">
+                    {app.status}
+                  </span>
+                </div>
+                
+                <div className="bg-black/30 p-4 rounded-xl border border-white/5 relative z-10">
+                  <h4 className="text-xs text-gray-500 uppercase tracking-widest mb-2 font-semibold">AI Generated Cover Letter</h4>
+                  <p className="text-sm text-gray-300 leading-relaxed italic border-l-2 border-gray-700 pl-4">
+                    "{app.cover_letter}"
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </motion.div>
+      )}
+
     </motion.div>
   );
 }
