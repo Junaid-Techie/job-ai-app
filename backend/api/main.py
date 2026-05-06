@@ -322,3 +322,42 @@ def get_applications(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
+
+# -------------------------
+# Interview Prep (AI Generated)
+# -------------------------
+@app.get("/interview-prep/{application_id}")
+def get_interview_prep(
+    application_id: int,
+    db: Session = Depends(SessionLocal),
+    user=Depends(get_current_user),
+):
+    try:
+        user_id = int(user["sub"])
+        application = db.query(Application).filter(Application.id == application_id, Application.user_id == user_id).first()
+        
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        from .embedding_service import client
+        
+        prompt = f"Act as an expert technical recruiter. Based on this job title ({application.job.title}) and description ({application.job.description[:1000]}) and this candidate's resume ({application.resume.content[:1000]}), generate 3 likely interview questions and a brief 1-sentence tip on how this specific candidate should answer each."
+        
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are an expert career coach helping a candidate prepare for an interview. Be concise and practical."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=400
+        )
+        
+        prep_guide = response.choices[0].message.content
+        return {"prep_guide": prep_guide}
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        db.close()

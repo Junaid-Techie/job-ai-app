@@ -20,6 +20,8 @@ export default function Dashboard() {
   
   const [loading, setLoading] = useState(false);
   const [applyingJobId, setApplyingJobId] = useState<number | null>(null);
+  const [preppingAppId, setPreppingAppId] = useState<number | null>(null);
+  const [activePrepGuides, setActivePrepGuides] = useState<Record<number, string>>({});
   const [error, setError] = useState("");
 
   const [filters, setFilters] = useState({
@@ -163,6 +165,23 @@ export default function Dashboard() {
     }
 
     setApplyingJobId(null);
+  };
+
+  const prepInterview = async (appId: number) => {
+    if (!token) return;
+    setPreppingAppId(appId);
+    
+    try {
+      const res = await fetch(`${API_URL}/interview-prep/${appId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to generate prep");
+      const data = await res.json();
+      setActivePrepGuides(prev => ({...prev, [appId]: data.prep_guide}));
+    } catch (err) {
+      console.error(err);
+    }
+    setPreppingAppId(null);
   };
 
   return (
@@ -376,6 +395,27 @@ export default function Dashboard() {
                     "{app.cover_letter}"
                   </p>
                 </div>
+
+                {activePrepGuides[app.id] ? (
+                  <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/30 relative z-10 mt-4">
+                    <h4 className="text-sm text-blue-400 font-semibold mb-2">🧠 AI Interview Prep Guide</h4>
+                    <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
+                      {activePrepGuides[app.id]}
+                    </div>
+                  </div>
+                ) : (
+                  <button 
+                    onClick={() => prepInterview(app.id)}
+                    disabled={preppingAppId === app.id}
+                    className="mt-4 w-full py-2 bg-white/5 hover:bg-white/10 text-blue-400 text-sm font-medium rounded-lg transition-all border border-blue-500/20 hover:border-blue-500/50 relative z-10 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {preppingAppId === app.id ? (
+                      <><span className="animate-spin">⚙️</span> Generating Guide...</>
+                    ) : (
+                      "Prep for Interview 🧠"
+                    )}
+                  </button>
+                )}
               </div>
             ))
           )}
