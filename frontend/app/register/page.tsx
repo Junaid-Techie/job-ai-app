@@ -23,7 +23,13 @@ export default function Register() {
   const data = await response.json();
 
   if (!response.ok) {
-    setError(data.detail || "Registration failed");
+    if (typeof data.detail === 'string') {
+      setError(data.detail);
+    } else if (Array.isArray(data.detail)) {
+      setError(data.detail[0].msg);
+    } else {
+      setError("Registration failed");
+    }
     return;
   }
 
