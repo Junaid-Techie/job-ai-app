@@ -78,3 +78,12 @@ uvicorn==0.40.0
 websockets==15.0.1
 yarl==1.22.0
 zstandard==0.25.0
+
+python-docx==1.1.0
+PyPDF2==3.0.1
+
+openai==1.13.3
+supabase==2.4.5
+python-multipart==0.0.9
+
+pgvector==0.2.5
