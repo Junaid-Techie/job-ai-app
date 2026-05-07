@@ -573,3 +573,20 @@ def admin_sync_jobs(
 ):
     background_tasks.add_task(run_sync)
     return {"message": "Job sync started in background"}
+
+@app.get("/resumes/")
+def get_resumes(db: Session = Depends(SessionLocal), user=Depends(get_current_user)):
+    try:
+        user_id = int(user["sub"])
+        from .models import Resume
+        resumes = db.query(Resume).filter(Resume.user_id == user_id).order_by(Resume.uploaded_at.desc()).all()
+        return [
+            {
+                "id": r.id,
+                "file_type": r.file_type,
+                "uploaded_at": r.uploaded_at
+            }
+            for r in resumes
+        ]
+    finally:
+        db.close()

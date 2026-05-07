@@ -15,6 +15,8 @@ export default function Dashboard() {
   const [savedJobs, setSavedJobs] = useState<Record<string, any>[]>([]);
   const [recommendations, setRecommendations] = useState<Record<string, any>[]>([]);
 
+  const [resumes, setResumes] = useState<any[]>([]);
+  const [showUpload, setShowUpload] = useState(false);
   const [resume, setResume] = useState("");
   const [resumeFile, setResumeFile] = useState<File | null>(null);
   const [resumeId, setResumeId] = useState<number | null>(null);
@@ -35,69 +37,10 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
-
-  const token = session?.accessToken;
-
-  const fetchApplications = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_URL}/applications/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) setApplications(await res.json());
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchSavedJobs = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_URL}/saved-jobs/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) setSavedJobs(await res.json());
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const fetchRecommendations = async () => {
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_URL}/recommendations/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) setRecommendations(await res.json());
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const saveJob = async (jobId: number) => {
-    if (!token) return;
-    try {
-      const res = await fetch(`${API_URL}/save-job/${jobId}`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (res.ok) {
-        alert("Job saved successfully!");
-        if (activeTab === "saved") fetchSavedJobs();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
     if (activeTab === "applications" && token) fetchApplications();
     if (activeTab === "saved" && token) fetchSavedJobs();
     if (activeTab === "recommendations" && token) fetchRecommendations();
+    if (token && resumes.length === 0) fetchResumes();
   }, [activeTab, token]);
 
   if (status === "loading" || !session) return null;
@@ -140,6 +83,8 @@ export default function Dashboard() {
 
       const data = await response.json();
       setResumeId(data.resume_id);
+      setShowUpload(false);
+      fetchResumes(); // Refresh the list
       alert("Resume successfully uploaded & embedded! You can now match & auto-apply.");
     } catch (err: unknown) {
       if (err instanceof TypeError && err.message.toLowerCase().includes("networkerror")) {
@@ -292,33 +237,63 @@ export default function Dashboard() {
             <div className="glass-panel p-8 rounded-2xl shadow-2xl space-y-6">
               <h2 className="text-xl font-medium border-b border-gray-700 pb-2">1. Your Resume</h2>
               
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Upload File (PDF/DOCX)</label>
-                <input
-                  type="file"
-                  accept=".pdf,.docx,.txt"
-                  onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-                  className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30"
-                />
-              </div>
+              {resumes.length > 0 && (
+                <div className="mb-4">
+                  <label className="block text-sm text-gray-400 mb-2">Select Uploaded Resume</label>
+                  <select 
+                    value={resumeId || ""} 
+                    onChange={(e) => {
+                      if (e.target.value === "new") {
+                        setShowUpload(true);
+                        setResumeId(null);
+                      } else {
+                        setResumeId(Number(e.target.value));
+                        setShowUpload(false);
+                      }
+                    }}
+                    className="w-full p-3 rounded-lg bg-black/50 border border-gray-700 text-white outline-none focus:border-blue-500"
+                  >
+                    {resumes.map(r => (
+                      <option key={r.id} value={r.id}>
+                        Resume #{r.id} ({r.file_type || 'text'}) - {new Date(r.uploaded_at).toLocaleDateString()}
+                      </option>
+                    ))}
+                    <option value="new">-- Upload New Resume --</option>
+                  </select>
+                </div>
+              )}
 
-              <div className="text-center text-sm text-gray-500">OR</div>
+              {(!resumes.length || showUpload) && (
+                <>
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">Upload File (PDF/DOCX)</label>
+                    <input
+                      type="file"
+                      accept=".pdf,.docx,.txt"
+                      onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                      className="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-400 hover:file:bg-blue-500/30"
+                    />
+                  </div>
 
-              <textarea
-                className="w-full p-4 rounded-xl bg-black/50 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
-                rows={4}
-                placeholder="Paste your resume text here..."
-                value={resume}
-                onChange={(e) => setResume(e.target.value)}
-              />
+                  <div className="text-center text-sm text-gray-500">OR</div>
 
-              <button
-                onClick={addResume}
-                disabled={loading || (!resume && !resumeFile)}
-                className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50"
-              >
-                {loading ? "Processing..." : "Embed & Save"}
-              </button>
+                  <textarea
+                    className="w-full p-4 rounded-xl bg-black/50 border border-white/10 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    rows={4}
+                    placeholder="Paste your resume text here..."
+                    value={resume}
+                    onChange={(e) => setResume(e.target.value)}
+                  />
+
+                  <button
+                    onClick={addResume}
+                    disabled={loading || (!resume && !resumeFile)}
+                    className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl hover:opacity-90 transition disabled:opacity-50"
+                  >
+                    {loading ? "Processing..." : "Embed & Save"}
+                  </button>
+                </>
+              )}
             </div>
 
             <div className="glass-panel p-8 rounded-2xl shadow-2xl space-y-6">
