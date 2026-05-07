@@ -176,15 +176,16 @@ def match_jobs(
             Job.work_mode,
             Job.salary_min,
             Job.job_type,
+            Job.company_size,
             Job.embedding.l2_distance(resume.embedding).label("distance")
         )
 
-        # Filters
+        # Filters — guard each nullable column carefully
         if min_salary > 0:
-            query = query.filter(Job.salary_min >= min_salary)
+            query = query.filter(Job.salary_min != None, Job.salary_min >= min_salary)
 
         if max_salary > 0:
-            query = query.filter(Job.salary_max <= max_salary)
+            query = query.filter(Job.salary_max != None, Job.salary_max <= max_salary)
 
         if job_type:
             query = query.filter(Job.job_type == job_type)
@@ -222,10 +223,11 @@ def match_jobs(
             {
                 "job_id": job.id,
                 "title": job.title,
-                "location": job.location,
-                "work_mode": job.work_mode,
+                "company": job.company_size or "",
+                "location": job.location or "Remote",
+                "work_mode": job.work_mode or "",
                 "salary_min": job.salary_min,
-                "job_type": job.job_type,
+                "job_type": job.job_type or "",
                 "similarity_score": round((1 / (1 + job.distance)) * 100, 2)
             }
             for job in jobs
