@@ -61,9 +61,16 @@ export default function Profile() {
       if (res.ok) {
         const data = await res.json();
         setAvatarUrl(data.avatar_url || "");
-        setFirstName(data.first_name || "");
-        setLastName(data.last_name || "");
-        setEmail(data.email || "");
+        
+        // Auto-fill from session if DB is empty
+        const sessionNameParts = session?.user?.name ? session.user.name.split(" ") : [];
+        const defaultFirstName = sessionNameParts[0] || "";
+        const defaultLastName = sessionNameParts.length > 1 ? sessionNameParts.slice(1).join(" ") : "";
+        
+        setFirstName(data.first_name || defaultFirstName);
+        setLastName(data.last_name || defaultLastName);
+        setEmail(data.email || session?.user?.email || "");
+        
         setPhone(data.phone_number || "");
         setHeadline(data.headline || "");
         setLocation(data.location || "");
@@ -160,9 +167,22 @@ export default function Profile() {
                   <span className="text-3xl font-bold text-gray-500">{(firstName?.[0] || "")}{(lastName?.[0] || "")}</span>
                 )}
               </div>
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center text-xs font-medium cursor-pointer backdrop-blur-sm">
-                Edit
-              </div>
+              <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center text-xs font-medium cursor-pointer backdrop-blur-sm">
+                Upload
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => setAvatarUrl(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }
+                  }} 
+                />
+              </label>
             </div>
             <div>
               <h1 className="text-4xl font-bold text-white mb-2">Advanced Career Profile</h1>
@@ -181,7 +201,7 @@ export default function Profile() {
             <h2 className="text-xl font-semibold text-white mb-6">1. Core Identity</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Profile Picture URL (Optional)</label>
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Profile Picture URL (Or Click Avatar to Upload)</label>
                 <input type="url" placeholder="https://example.com/avatar.jpg" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition" />
               </div>
               <div>

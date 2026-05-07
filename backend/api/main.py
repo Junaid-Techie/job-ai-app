@@ -534,7 +534,7 @@ def get_recommendations(
         from .models import Resume, Job
         
         # Get latest resume
-        resume = db.query(Resume).filter(Resume.user_id == user_id).order_by(Resume.uploaded_at.desc()).first()
+        resume = db.query(Resume).filter(Resume.user_id == user_id).order_by(Resume.id.desc()).first()
         if not resume:
             raise HTTPException(status_code=404, detail="No resume found to generate recommendations")
             
@@ -579,12 +579,12 @@ def get_resumes(db: Session = Depends(SessionLocal), user=Depends(get_current_us
     try:
         user_id = int(user["sub"])
         from .models import Resume
-        resumes = db.query(Resume).filter(Resume.user_id == user_id).order_by(Resume.uploaded_at.desc()).all()
+        resumes = db.query(Resume).filter(Resume.user_id == user_id).order_by(Resume.id.desc()).all()
         return [
             {
                 "id": r.id,
                 "file_type": r.file_type,
-                "uploaded_at": r.uploaded_at
+                "uploaded_at": getattr(r, "id", 0)
             }
             for r in resumes
         ]

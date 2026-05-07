@@ -335,7 +335,7 @@ export default function Dashboard() {
                   >
                     {resumes.map(r => (
                       <option key={r.id} value={r.id}>
-                        Resume #{r.id} ({r.file_type || 'text'}) - {new Date(r.uploaded_at).toLocaleDateString()}
+                        Resume #{r.id} ({r.file_type || 'text'})
                       </option>
                     ))}
                     <option value="new">-- Upload New Resume --</option>
