@@ -101,6 +101,7 @@ class Job(Base):
     industry = Column(String)
 
     posted_date = Column(DateTime, default=datetime.utcnow)
+    url = Column(String, nullable=True)
 
     embedding = Column(Vector(1536))
 

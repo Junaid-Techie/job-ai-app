@@ -1,70 +1,117 @@
 import os
 import sys
+import re
 import requests
-import asyncio
-from datetime import datetime
 from dotenv import load_dotenv
 
-# Ensure we can import from backend
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+load_dotenv()
 
 from api.database import SessionLocal
 from api.models import Job
 from api.embedding_service import generate_embedding
 
-load_dotenv()
 
-def fetch_and_ingest_jobs():
-    print("Fetching jobs from Remotive API...")
-    # Fetch free remote jobs from Remotive
-    response = requests.get("https://remotive.com/api/remote-jobs?limit=10")
-    if response.status_code != 200:
-        print("Failed to fetch jobs.")
-        return
+def clean_html(text: str) -> str:
+    return re.sub(r"<[^<]+?>", "", text or "").strip()
 
-    data = response.json()
-    jobs_list = data.get("jobs", [])
-    
+
+def fetch_remotive(db, limit=20) -> int:
+    """Fetch remote jobs from Remotive API (free, no key)."""
+    try:
+        res = requests.get(f"https://remotive.com/api/remote-jobs?limit={limit}", timeout=10)
+        if res.status_code != 200:
+            print("Remotive: failed to fetch")
+            return 0
+        jobs = res.json().get("jobs", [])
+        added = 0
+        for j in jobs:
+            title = j.get("title", "")
+            company = j.get("company_name", "")
+            if not title:
+                continue
+            existing = db.query(Job).filter(Job.title == title, Job.company_size == company).first()
+            if existing:
+                continue
+            desc = clean_html(j.get("description", ""))
+            combined = f"Title: {title} Company: {company} Description: {desc[:2000]}"
+            embedding = generate_embedding(combined)
+            db.add(Job(
+                title=title,
+                description=desc,
+                location=j.get("candidate_required_location") or "Remote",
+                work_mode="Remote",
+                job_type=(j.get("job_type") or "").replace("_", " ").title(),
+                company_size=company,
+                industry=j.get("category", ""),
+                salary_min=None,
+                salary_max=None,
+                embedding=embedding,
+                url=j.get("url", ""),
+            ))
+            added += 1
+        db.commit()
+        print(f"Remotive: +{added} new jobs")
+        return added
+    except Exception as e:
+        print(f"Remotive error: {e}")
+        return 0
+
+
+def fetch_arbeitnow(db, limit=20) -> int:
+    """Fetch jobs from Arbeitnow (free, no key, great data)."""
+    try:
+        res = requests.get("https://arbeitnow.com/api/job-board-api", timeout=10)
+        if res.status_code != 200:
+            print("Arbeitnow: failed to fetch")
+            return 0
+        jobs = res.json().get("data", [])[:limit]
+        added = 0
+        for j in jobs:
+            title = j.get("title", "")
+            company = j.get("company_name", "")
+            if not title:
+                continue
+            existing = db.query(Job).filter(Job.title == title, Job.company_size == company).first()
+            if existing:
+                continue
+            desc = clean_html(j.get("description", ""))
+            combined = f"Title: {title} Company: {company} Description: {desc[:2000]}"
+            embedding = generate_embedding(combined)
+            db.add(Job(
+                title=title,
+                description=desc,
+                location=j.get("location") or "Remote",
+                work_mode="Remote" if j.get("remote") else "On-site",
+                job_type=j.get("job_types", [""])[0] if j.get("job_types") else "",
+                company_size=company,
+                industry=j.get("tags", [""])[0] if j.get("tags") else "",
+                salary_min=None,
+                salary_max=None,
+                embedding=embedding,
+                url=j.get("url", ""),
+            ))
+            added += 1
+        db.commit()
+        print(f"Arbeitnow: +{added} new jobs")
+        return added
+    except Exception as e:
+        print(f"Arbeitnow error: {e}")
+        return 0
+
+
+def fetch_and_ingest_jobs(limit_per_source=15):
+    """Main ingestion function: pulls from multiple free APIs."""
     db = SessionLocal()
-    
-    added_count = 0
-    for j in jobs_list:
-        # Check if job already exists (by exact title and company name match)
-        # Remotive includes company name in 'company_name'
-        existing = db.query(Job).filter(Job.title == j['title'], Job.company_size == j['company_name']).first()
-        if existing:
-            continue
-            
-        print(f"Ingesting: {j['title']} at {j['company_name']}")
-        
-        # Clean HTML from description
-        import re
-        clean_desc = re.sub('<[^<]+?>', '', j.get('description', ''))
-        
-        # Generate embedding for the job
-        combined_text = f"Title: {j['title']} Description: {clean_desc[:2000]}"
-        embedding = generate_embedding(combined_text)
-        
-        new_job = Job(
-            title=j['title'],
-            description=clean_desc,
-            location=j.get('candidate_required_location', 'Remote'),
-            work_mode='Remote',
-            job_type=j.get('job_type', '').replace('_', ' ').title(),
-            company_size=j.get('company_name', ''), # Reusing company_size for company_name to avoid altering DB
-            industry=j.get('category', ''),
-            salary_min=None,
-            salary_max=None,
-            embedding=embedding
-        )
-        
-        db.add(new_job)
-        added_count += 1
-        
-    db.commit()
-    db.close()
-    
-    print(f"Successfully ingested {added_count} new remote jobs.")
+    try:
+        total = 0
+        total += fetch_remotive(db, limit=limit_per_source)
+        total += fetch_arbeitnow(db, limit=limit_per_source)
+        print(f"Total new jobs ingested: {total}")
+        return total
+    finally:
+        db.close()
+
 
 if __name__ == "__main__":
     fetch_and_ingest_jobs()

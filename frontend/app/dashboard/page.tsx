@@ -126,6 +126,11 @@ export default function Dashboard() {
     fetchResumes();
   }, [activeTab, token]);
 
+  // Auto-load recommendations whenever a resume becomes available
+  useEffect(() => {
+    if (resumeId && token) fetchRecommendations();
+  }, [resumeId]);
+
   if (status === "loading" || !session) return null;
 
   const addResume = async () => {
@@ -192,23 +197,25 @@ export default function Dashboard() {
 
     setLoading(true);
     setError("");
+    setMatches([]);
 
     try {
+      // Use the new search-and-match endpoint — fetches live jobs THEN matches
       const queryParams = new URLSearchParams();
       if (filters.min_salary) queryParams.append("min_salary", filters.min_salary);
-      if (filters.job_type) queryParams.append("job_type", filters.job_type);
       if (filters.work_mode) queryParams.append("work_mode", filters.work_mode);
-      if (filters.location) queryParams.append("location", filters.location);
 
-      const url = `${API_URL}/match-jobs/${resumeId}?${queryParams.toString()}`;
-
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `${API_URL}/search-and-match/${resumeId}?${queryParams.toString()}`,
+        {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.detail || "Failed to match jobs");
+        throw new Error(errData.detail || "Failed to fetch and match jobs");
       }
 
       const data = await response.json();
@@ -452,8 +459,11 @@ export default function Dashboard() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-xl font-semibold text-white">{job.title}</h3>
+                      {job.company && (
+                        <p className="text-blue-400 text-sm font-medium mt-0.5">{job.company}</p>
+                      )}
                       <p className="text-gray-400 text-sm mt-1">
-                        {job.location || "Location unknown"} • {job.work_mode || "Flexible"}
+                        {job.location || "Remote"} • {job.work_mode || "Flexible"}
                       </p>
                     </div>
                     <div className="flex flex-col items-end">
@@ -464,29 +474,41 @@ export default function Dashboard() {
                     </div>
                   </div>
                   
-                  <div className="flex justify-between items-end mt-2">
-                    <div className="flex gap-2">
-                      <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
-                        ${job.salary_min ? job.salary_min.toLocaleString() : "Unknown"}
-                      </span>
+                  <div className="flex flex-wrap justify-between items-center mt-2 gap-3">
+                    <div className="flex flex-wrap gap-2">
                       <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
                         {job.job_type || "Full-time"}
                       </span>
+                      {job.salary_min && (
+                        <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs text-gray-300">
+                          ${job.salary_min.toLocaleString()}+
+                        </span>
+                      )}
                     </div>
 
-                    <button 
-                      onClick={() => autoApply(job.job_id)}
-                      disabled={applyingJobId === job.job_id}
-                      className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all disabled:opacity-50 flex items-center gap-2"
-                    >
-                      {applyingJobId === job.job_id ? (
-                        <>
-                          <span className="animate-spin">⚙️</span> Writing Cover Letter...
-                        </>
-                      ) : (
-                        "Auto Apply with AI ⚡"
+                    <div className="flex gap-2">
+                      {job.url && (
+                        <a
+                          href={job.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 border border-blue-500/40 text-blue-400 text-sm font-semibold rounded-lg hover:bg-blue-500/10 transition-all"
+                        >
+                          View Job ↗
+                        </a>
                       )}
-                    </button>
+                      <button 
+                        onClick={() => autoApply(job.job_id)}
+                        disabled={applyingJobId === job.job_id}
+                        className="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-semibold rounded-lg hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] transition-all disabled:opacity-50 flex items-center gap-2"
+                      >
+                        {applyingJobId === job.job_id ? (
+                          <><span className="animate-spin">⚙️</span> Writing Cover Letter...</>
+                        ) : (
+                          "Auto Apply ⚡"
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -554,23 +576,33 @@ export default function Dashboard() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
           <h2 className="text-xl font-medium text-white mb-4">Personalized For You</h2>
           {recommendations.length === 0 ? (
-            <p className="text-gray-400">No recommendations available. Try uploading a resume in the Search tab first.</p>
+            <div className="text-center py-16 text-gray-400">
+              <div className="text-4xl mb-3">✨</div>
+              <p>Upload your resume in the Search tab to get personalized recommendations.</p>
+            </div>
           ) : (
             <div className="space-y-4">
               {recommendations.map((rec: any) => (
                 <div key={rec.job_id} className="glass-panel p-6 rounded-xl shadow-lg border border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div>
                     <h3 className="text-xl font-bold text-white">{rec.title}</h3>
-                    <p className="text-gray-400 text-sm">{rec.company} • {rec.location}</p>
+                    {rec.company && <p className="text-blue-400 text-sm font-medium mt-0.5">{rec.company}</p>}
+                    <p className="text-gray-400 text-sm mt-1">{rec.location} {rec.work_mode ? `• ${rec.work_mode}` : ""}</p>
                     <div className="mt-2 text-xs font-semibold text-emerald-400">Match: {rec.similarity_score}%</div>
                   </div>
-                  <div className="flex gap-3">
-                    <button onClick={() => saveJob(rec.job_id)} className="px-4 py-2 border border-emerald-500/50 text-emerald-400 rounded-lg hover:bg-emerald-500/10 text-sm transition-colors">
+                  <div className="flex gap-3 shrink-0">
+                    <button onClick={() => saveJob(rec.job_id)} className="px-4 py-2 border border-white/20 text-gray-300 rounded-lg hover:bg-white/5 text-sm transition-colors">
                       Save
                     </button>
-                    <button onClick={() => setActiveTab("search")} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors shadow-lg shadow-blue-500/20">
-                      Apply
-                    </button>
+                    {rec.url ? (
+                      <a href={rec.url} target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors shadow-lg shadow-blue-500/20">
+                        View Job ↗
+                      </a>
+                    ) : (
+                      <button onClick={() => setActiveTab("search")} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm transition-colors shadow-lg shadow-blue-500/20">
+                        Search
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

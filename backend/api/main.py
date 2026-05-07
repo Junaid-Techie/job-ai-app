@@ -241,6 +241,80 @@ def match_jobs(
     finally:
         db.close()
 
+
+# -------------------------
+# Search Live Jobs + Match (Fetches fresh jobs THEN matches)
+# -------------------------
+@app.post("/search-and-match/{resume_id}")
+def search_and_match(
+    resume_id: int,
+    min_salary: float = 0,
+    work_mode: str = "",
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
+):
+    try:
+        user_id = int(user["sub"])
+
+        resume = db.query(Resume).filter(
+            Resume.id == resume_id,
+            Resume.user_id == user_id
+        ).first()
+        if not resume:
+            raise HTTPException(status_code=404, detail="Resume not found")
+
+        # Step 1: Ingest fresh jobs from live sources in the same session
+        try:
+            from ..scripts.ingest_jobs import fetch_remotive, fetch_arbeitnow
+            fetch_remotive(db, limit=15)
+            fetch_arbeitnow(db, limit=15)
+        except Exception as ingest_err:
+            print(f"Live job fetch warning (non-fatal): {ingest_err}")
+
+        # Step 2: Semantic match against all jobs in DB
+        query = db.query(
+            Job.id,
+            Job.title,
+            Job.company_size,
+            Job.location,
+            Job.work_mode,
+            Job.salary_min,
+            Job.job_type,
+            Job.url,
+            Job.embedding.l2_distance(resume.embedding).label("distance")
+        )
+
+        if min_salary > 0:
+            query = query.filter(Job.salary_min != None, Job.salary_min >= min_salary)
+        if work_mode:
+            query = query.filter(Job.work_mode == work_mode)
+
+        jobs = query.order_by(
+            Job.embedding.l2_distance(resume.embedding)
+        ).limit(15).all()
+
+        return [
+            {
+                "job_id": job.id,
+                "title": job.title,
+                "company": job.company_size or "",
+                "location": job.location or "Remote",
+                "work_mode": job.work_mode or "",
+                "salary_min": job.salary_min,
+                "job_type": job.job_type or "",
+                "url": job.url or "",
+                "similarity_score": round((1 / (1 + job.distance)) * 100, 2),
+            }
+            for job in jobs
+        ]
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Search error: {str(e)}")
+    finally:
+        db.close()
+
 # -------------------------
 # Auto Apply (AI Cover Letter + Tracking)
 # -------------------------
@@ -558,21 +632,29 @@ def get_recommendations(
             Job.title,
             Job.company_size,
             Job.location,
+            Job.work_mode,
+            Job.url,
             Job.embedding.l2_distance(resume.embedding).label("distance")
         ).order_by(
             Job.embedding.l2_distance(resume.embedding)
-        ).limit(5).all()
+        ).limit(8).all()
         
         return [
             {
                 "job_id": job.id,
                 "title": job.title,
-                "company": job.company_size,
-                "location": job.location,
+                "company": job.company_size or "",
+                "location": job.location or "Remote",
+                "work_mode": job.work_mode or "",
+                "url": job.url or "",
                 "similarity_score": round((1 / (1 + job.distance)) * 100, 2)
             }
             for job in jobs
         ]
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
 
