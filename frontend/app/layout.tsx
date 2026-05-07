@@ -23,7 +23,7 @@ export default function RootLayout({
           <Background />
           <div className="relative z-10 flex flex-col min-h-screen">
             <Navbar />
-            <main className="flex-1 px-6 py-10 max-w-6xl mx-auto">
+            <main className="flex-1 w-full">
               {children}
             </main>
             <Footer />
