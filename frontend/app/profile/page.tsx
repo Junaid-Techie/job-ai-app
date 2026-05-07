@@ -93,9 +93,13 @@ export default function Profile() {
         setDisabilityStatus(data.disability_status || "");
         setWorkAuthorization(data.work_authorization || "");
         setRequiresSponsorship(data.requires_sponsorship || false);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        setErrorMsg(`Could not load profile: ${errData.detail || res.status}`);
       }
     } catch (err) {
       console.error("Failed to fetch profile", err);
+      setErrorMsg("Network error loading profile. Please refresh.");
     }
   };
 
@@ -115,7 +119,8 @@ export default function Profile() {
         body: JSON.stringify({ 
           avatar_url: avatarUrl,
           first_name: firstName, 
-          last_name: lastName, 
+          last_name: lastName,
+          email: email,
           phone_number: phone,
           location, 
           job_type: jobType,
@@ -218,12 +223,23 @@ export default function Profile() {
                 <input type="url" placeholder="https://example.com/avatar.jpg" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">First Name *</label>
-                <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition" />
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">First Name</label>
+                <input type="text" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Last Name *</label>
-                <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition" />
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Last Name</label>
+                <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Email Address</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition"
+                  placeholder="you@example.com"
+                />
+                <p className="text-xs text-gray-500 mt-1 ml-1">Changing your email will update your login credentials.</p>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Phone Number</label>

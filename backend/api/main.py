@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from .auth import router as auth_router
 from .upload import router as upload_router
-from .database import engine, SessionLocal
+from .database import engine, SessionLocal, get_db
 from .models import Base, Resume, Job, Application
 from .embedding_service import generate_embedding
 from .security import get_current_user
@@ -56,7 +56,7 @@ class ResumeRequest(BaseModel):
 @app.post("/add-resume/")
 def add_resume(
     data: ResumeRequest,
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -100,7 +100,7 @@ def add_job(
     sponsorship: bool = False,
     company_size: str = "",
     industry: str = "",
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     admin_secret: str = Header(None, description="Secret key for admin operations"),
 ):
     import os
@@ -155,7 +155,7 @@ def match_jobs(
     company_size: str = "",
     industry: str = "",
     posted_within_days: int = 0,
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -246,7 +246,7 @@ def match_jobs(
 def auto_apply(
     job_id: int,
     resume_id: int,
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -309,7 +309,7 @@ def auto_apply(
 # -------------------------
 @app.get("/applications/")
 def get_applications(
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -338,7 +338,7 @@ def get_applications(
 @app.get("/interview-prep/{application_id}")
 def get_interview_prep(
     application_id: int,
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -377,6 +377,7 @@ def get_interview_prep(
 class UpdateProfileRequest(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
+    email: str | None = None
     location: str | None = None
     job_type: str | None = None
     headline: str | None = None
@@ -400,7 +401,7 @@ class UpdateProfileRequest(BaseModel):
 
 @app.get("/profile/")
 def get_profile(
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -440,7 +441,7 @@ def get_profile(
 @app.put("/profile/")
 def update_profile(
     data: UpdateProfileRequest,
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -449,31 +450,45 @@ def update_profile(
         db_user = db.query(User).filter(User.id == user_id).first()
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
-        
-        db_user.first_name = data.first_name
-        db_user.last_name = data.last_name
-        db_user.location = data.location
-        db_user.job_type = data.job_type
-        db_user.headline = data.headline
-        db_user.about = data.about
-        db_user.skills = data.skills
-        db_user.linkedin_url = data.linkedin_url
-        db_user.github_url = data.github_url
-        db_user.portfolio_url = data.portfolio_url
-        db_user.experience_years = data.experience_years
-        db_user.gender = data.gender
-        db_user.ethnicity = data.ethnicity
-        db_user.veteran_status = data.veteran_status
-        db_user.disability_status = data.disability_status
-        db_user.work_authorization = data.work_authorization
+
+        # Handle email change — check for duplicates first
+        if data.email and data.email != db_user.email:
+            existing = db.query(User).filter(User.email == data.email, User.id != user_id).first()
+            if existing:
+                raise HTTPException(status_code=400, detail="That email is already in use by another account.")
+            db_user.email = data.email
+
+        # Only update fields that were explicitly provided (not None)
+        if data.first_name is not None: db_user.first_name = data.first_name
+        if data.last_name is not None: db_user.last_name = data.last_name
+        if data.location is not None: db_user.location = data.location
+        if data.job_type is not None: db_user.job_type = data.job_type
+        if data.headline is not None: db_user.headline = data.headline
+        if data.about is not None: db_user.about = data.about
+        if data.skills is not None: db_user.skills = data.skills
+        if data.linkedin_url is not None: db_user.linkedin_url = data.linkedin_url
+        if data.github_url is not None: db_user.github_url = data.github_url
+        if data.portfolio_url is not None: db_user.portfolio_url = data.portfolio_url
+        if data.experience_years is not None: db_user.experience_years = data.experience_years
+        if data.gender is not None: db_user.gender = data.gender
+        if data.ethnicity is not None: db_user.ethnicity = data.ethnicity
+        if data.veteran_status is not None: db_user.veteran_status = data.veteran_status
+        if data.disability_status is not None: db_user.disability_status = data.disability_status
+        if data.work_authorization is not None: db_user.work_authorization = data.work_authorization
         db_user.requires_sponsorship = data.requires_sponsorship
-        db_user.target_salary = data.target_salary
-        db_user.avatar_url = data.avatar_url
-        db_user.phone_number = data.phone_number
-        db_user.current_company = data.current_company
-        db_user.highest_education = data.highest_education
+        if data.target_salary is not None: db_user.target_salary = data.target_salary
+        # avatar_url can be set to empty string to remove the photo
+        if data.avatar_url is not None: db_user.avatar_url = data.avatar_url
+        if data.phone_number is not None: db_user.phone_number = data.phone_number
+        if data.current_company is not None: db_user.current_company = data.current_company
+        if data.highest_education is not None: db_user.highest_education = data.highest_education
+
         db.commit()
         return {"message": "Profile updated successfully"}
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
 
@@ -485,7 +500,7 @@ from fastapi import BackgroundTasks
 @app.post("/save-job/{job_id}")
 def save_job(
     job_id: int,
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -508,7 +523,7 @@ def save_job(
 
 @app.get("/saved-jobs/")
 def get_saved_jobs(
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -531,7 +546,7 @@ def get_saved_jobs(
 
 @app.get("/recommendations/")
 def get_recommendations(
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     user=Depends(get_current_user),
 ):
     try:
@@ -580,7 +595,7 @@ def admin_sync_jobs(
     return {"message": "Job sync started in background"}
 
 @app.get("/resumes/")
-def get_resumes(db: Session = Depends(SessionLocal), user=Depends(get_current_user)):
+def get_resumes(db: Session = Depends(get_db), user=Depends(get_current_user)):
     try:
         user_id = int(user["sub"])
         from .models import Resume
