@@ -12,6 +12,8 @@ export default function Profile() {
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [location, setLocation] = useState("");
+  const [jobType, setJobType] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
@@ -34,6 +36,8 @@ export default function Profile() {
         const data = await res.json();
         setFirstName(data.first_name || "");
         setLastName(data.last_name || "");
+        setLocation(data.location || "");
+        setJobType(data.job_type || "");
         setEmail(data.email || "");
       }
     } catch (err) {
@@ -54,7 +58,7 @@ export default function Profile() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session?.accessToken}` 
         },
-        body: JSON.stringify({ first_name: firstName, last_name: lastName })
+        body: JSON.stringify({ first_name: firstName, last_name: lastName, location, job_type: jobType })
       });
 
       if (res.ok) {
@@ -116,6 +120,33 @@ export default function Profile() {
                   onChange={(e) => setLastName(e.target.value)}
                   className="w-full p-4 rounded-xl bg-black/50 border border-white/10 text-white focus:ring-2 focus:ring-emerald-500/50 outline-none transition"
                 />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Location</label>
+                <input
+                  type="text"
+                  placeholder="e.g. New York, NY or Remote"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  className="w-full p-4 rounded-xl bg-black/50 border border-white/10 text-white focus:ring-2 focus:ring-emerald-500/50 outline-none transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-400 mb-2">Preferred Job Type</label>
+                <select
+                  value={jobType}
+                  onChange={(e) => setJobType(e.target.value)}
+                  className="w-full p-4 rounded-xl bg-black/50 border border-white/10 text-white focus:ring-2 focus:ring-emerald-500/50 outline-none transition"
+                >
+                  <option value="">Select...</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Contract">Contract</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Freelance">Freelance</option>
+                </select>
               </div>
             </div>
 

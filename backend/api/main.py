@@ -49,18 +49,21 @@ def root():
 # -------------------------
 # Add Resume (Protected)
 # -------------------------
+class ResumeRequest(BaseModel):
+    content: str
+
 @app.post("/add-resume/")
 def add_resume(
-    content: str,
+    data: ResumeRequest,
     db: Session = Depends(SessionLocal),
     user=Depends(get_current_user),
 ):
     try:
         user_id = int(user["sub"])
-        embedding = generate_embedding(content)
+        embedding = generate_embedding(data.content)
 
         resume = Resume(
-            content=content,
+            content=data.content,
             embedding=embedding,
             user_id=user_id,
             file_path="manual_input",
@@ -369,6 +372,8 @@ from pydantic import BaseModel
 class UpdateProfileRequest(BaseModel):
     first_name: str
     last_name: str
+    location: str
+    job_type: str
 
 @app.get("/profile/")
 def get_profile(
@@ -381,7 +386,13 @@ def get_profile(
         db_user = db.query(User).filter(User.id == user_id).first()
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
-        return {"first_name": db_user.first_name, "last_name": db_user.last_name, "email": db_user.email}
+        return {
+            "first_name": db_user.first_name, 
+            "last_name": db_user.last_name, 
+            "email": db_user.email,
+            "location": db_user.location,
+            "job_type": db_user.job_type
+        }
     finally:
         db.close()
 
@@ -400,6 +411,8 @@ def update_profile(
         
         db_user.first_name = data.first_name
         db_user.last_name = data.last_name
+        db_user.location = data.location
+        db_user.job_type = data.job_type
         db.commit()
         return {"message": "Profile updated successfully"}
     finally:

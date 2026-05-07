@@ -23,6 +23,8 @@ class User(Base):
     first_name = Column(String, nullable=True)
     last_name = Column(String, nullable=True)
     email = Column(String, unique=True, index=True, nullable=False)
+    location = Column(String, nullable=True)
+    job_type = Column(String, nullable=True)
     hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { signIn } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
 
@@ -20,21 +20,49 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // Touch state for dynamic validation
+  const [touched, setTouched] = useState({
+    firstName: false,
+    lastName: false,
+    email: false,
+    password: false,
+    confirmPassword: false,
+  });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  // Simple password strength check
-  const isPasswordStrong = password.length >= 8 && /[A-Z]/.test(password) && /[0-9]/.test(password);
+  // Dynamic Validation Checks
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasLength = password.length >= 8;
+  const isPasswordStrong = hasUppercase && hasNumber && hasLength;
+  const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+
+  // Handle Input Blur for showing errors
+  const handleBlur = (field: keyof typeof touched) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
 
   const resetState = () => {
     setError("");
     setSuccessMsg("");
     setLoading(false);
+    setTouched({
+      firstName: false,
+      lastName: false,
+      email: false,
+      password: false,
+      confirmPassword: false,
+    });
   };
 
   const handleSignIn = async () => {
-    resetState();
+    setError("");
+    setTouched({ firstName: true, lastName: true, email: true, password: true, confirmPassword: true });
+    
     if (!email || !password) {
       setError("Please fill in all fields.");
       return;
@@ -56,20 +84,11 @@ export default function AuthPage() {
   };
 
   const handleSignUp = async () => {
-    resetState();
+    setError("");
+    setTouched({ firstName: true, lastName: true, email: true, password: true, confirmPassword: true });
     
-    if (!firstName || !lastName || !email || !password || !confirmPassword) {
-      setError("All fields are required.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
-
-    if (!isPasswordStrong) {
-      setError("Password must be at least 8 characters, with 1 uppercase letter and 1 number.");
+    if (!firstName || !lastName || !isValidEmail || !isPasswordStrong || !passwordsMatch) {
+      setError("Please fix the highlighted errors before submitting.");
       return;
     }
 
@@ -102,14 +121,16 @@ export default function AuthPage() {
   };
 
   const handleForgotPassword = async () => {
-    resetState();
-    if (!email) {
-      setError("Please enter your email address.");
+    setError("");
+    setTouched((prev) => ({ ...prev, email: true }));
+
+    if (!isValidEmail) {
+      setError("Please enter a valid email address.");
       return;
     }
 
     setLoading(true);
-    // Simulating network request for password reset (since no email server is configured)
+    // Simulating network request for password reset
     setTimeout(() => {
       setSuccessMsg("If an account exists, a password reset link has been sent to your email.");
       setLoading(false);
@@ -127,6 +148,14 @@ export default function AuthPage() {
     else handleForgotPassword();
   };
 
+  // Border logic helpers
+  const getInputClass = (isTouched: boolean, isValid: boolean) => {
+    const base = "w-full p-3.5 rounded-xl bg-black/50 border text-white outline-none transition-all";
+    if (!isTouched) return `${base} border-white/10 focus:ring-2 focus:ring-blue-500/50`;
+    if (isValid) return `${base} border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/50`;
+    return `${base} border-red-500/50 focus:ring-2 focus:ring-red-500/50`;
+  };
+
   return (
     <div className="relative z-20 min-h-[85vh] flex items-center justify-center py-10 px-4">
       <motion.div 
@@ -137,11 +166,9 @@ export default function AuthPage() {
       >
         <div className="glass-panel p-8 sm:p-10 rounded-3xl shadow-2xl border border-white/10 relative overflow-hidden">
           
-          {/* Ambient Backgrounds */}
           <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500/20 blur-[100px] rounded-full pointer-events-none" />
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none" />
 
-          {/* Header */}
           <div className="relative z-10 text-center mb-8">
             <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-2">
               {mode === "signIn" ? "Welcome Back" : mode === "signUp" ? "Create Account" : "Reset Password"}
@@ -151,7 +178,6 @@ export default function AuthPage() {
             </p>
           </div>
 
-          {/* Alerts */}
           <AnimatePresence>
             {error && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg mb-6 text-sm text-center relative z-10">
@@ -165,7 +191,6 @@ export default function AuthPage() {
             )}
           </AnimatePresence>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
             
             {mode === "signUp" && (
@@ -174,19 +199,23 @@ export default function AuthPage() {
                   <label className="block text-xs font-medium text-gray-400 mb-1 ml-1 uppercase tracking-wider">First Name</label>
                   <input
                     type="text"
-                    className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                    className={getInputClass(touched.firstName, firstName.length > 0)}
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
+                    onBlur={() => handleBlur("firstName")}
                   />
+                  {touched.firstName && !firstName && <p className="text-red-400 text-xs mt-1 ml-1">Required</p>}
                 </div>
                 <div className="flex-1">
                   <label className="block text-xs font-medium text-gray-400 mb-1 ml-1 uppercase tracking-wider">Last Name</label>
                   <input
                     type="text"
-                    className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                    className={getInputClass(touched.lastName, lastName.length > 0)}
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
+                    onBlur={() => handleBlur("lastName")}
                   />
+                  {touched.lastName && !lastName && <p className="text-red-400 text-xs mt-1 ml-1">Required</p>}
                 </div>
               </div>
             )}
@@ -196,10 +225,12 @@ export default function AuthPage() {
               <input
                 type="email"
                 placeholder="you@example.com"
-                className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                className={getInputClass(touched.email, isValidEmail)}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => handleBlur("email")}
               />
+              {touched.email && !isValidEmail && <p className="text-red-400 text-xs mt-1 ml-1">Please enter a valid email.</p>}
             </div>
 
             {mode !== "forgotPassword" && (
@@ -215,10 +246,27 @@ export default function AuthPage() {
                 <input
                   type="password"
                   placeholder="••••••••"
-                  className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all"
+                  className={getInputClass(touched.password, mode === "signUp" ? isPasswordStrong : password.length > 0)}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() => handleBlur("password")}
                 />
+                
+                {/* Dynamic Password Strength Indicator (Only on Sign Up) */}
+                {mode === "signUp" && (
+                  <div className="mt-2 ml-1 space-y-1">
+                    <p className={`text-xs flex items-center gap-1 ${hasLength ? "text-emerald-400" : "text-gray-500"}`}>
+                      {hasLength ? "✓" : "○"} At least 8 characters
+                    </p>
+                    <p className={`text-xs flex items-center gap-1 ${hasUppercase ? "text-emerald-400" : "text-gray-500"}`}>
+                      {hasUppercase ? "✓" : "○"} One uppercase letter
+                    </p>
+                    <p className={`text-xs flex items-center gap-1 ${hasNumber ? "text-emerald-400" : "text-gray-500"}`}>
+                      {hasNumber ? "✓" : "○"} One number
+                    </p>
+                  </div>
+                )}
+                {mode === "signIn" && touched.password && !password && <p className="text-red-400 text-xs mt-1 ml-1">Required</p>}
               </div>
             )}
 
@@ -228,10 +276,14 @@ export default function AuthPage() {
                 <input
                   type="password"
                   placeholder="••••••••"
-                  className={`w-full p-3.5 rounded-xl bg-black/50 border text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all ${confirmPassword && password !== confirmPassword ? "border-red-500/50" : "border-white/10"}`}
+                  className={getInputClass(touched.confirmPassword, passwordsMatch)}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                  onBlur={() => handleBlur("confirmPassword")}
                 />
+                {touched.confirmPassword && !passwordsMatch && (
+                  <p className="text-red-400 text-xs mt-1 ml-1">Passwords do not match.</p>
+                )}
               </div>
             )}
 
