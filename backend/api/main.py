@@ -374,6 +374,13 @@ class UpdateProfileRequest(BaseModel):
     last_name: str
     location: str
     job_type: str
+    headline: str | None = None
+    about: str | None = None
+    skills: str | None = None
+    linkedin_url: str | None = None
+    github_url: str | None = None
+    portfolio_url: str | None = None
+    experience_years: int | None = None
 
 @app.get("/profile/")
 def get_profile(
@@ -391,7 +398,14 @@ def get_profile(
             "last_name": db_user.last_name, 
             "email": db_user.email,
             "location": db_user.location,
-            "job_type": db_user.job_type
+            "job_type": db_user.job_type,
+            "headline": db_user.headline,
+            "about": db_user.about,
+            "skills": db_user.skills,
+            "linkedin_url": db_user.linkedin_url,
+            "github_url": db_user.github_url,
+            "portfolio_url": db_user.portfolio_url,
+            "experience_years": db_user.experience_years
         }
     finally:
         db.close()
@@ -413,6 +427,13 @@ def update_profile(
         db_user.last_name = data.last_name
         db_user.location = data.location
         db_user.job_type = data.job_type
+        db_user.headline = data.headline
+        db_user.about = data.about
+        db_user.skills = data.skills
+        db_user.linkedin_url = data.linkedin_url
+        db_user.github_url = data.github_url
+        db_user.portfolio_url = data.portfolio_url
+        db_user.experience_years = data.experience_years
         db.commit()
         return {"message": "Profile updated successfully"}
     finally:
