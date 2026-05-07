@@ -123,3 +123,14 @@ class Application(Base):
     user = relationship("User", backref="applications")
     job = relationship("Job", backref="applications")
     resume = relationship("Resume", backref="applications")
+
+class SavedJob(Base):
+    __tablename__ = "saved_jobs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    job_id = Column(Integer, ForeignKey("jobs.id"))
+    saved_at = Column(DateTime, default=datetime.utcnow)
+
+    user = relationship("User")
+    job = relationship("Job")
