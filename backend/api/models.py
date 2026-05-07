@@ -32,6 +32,13 @@ class User(Base):
     portfolio_url = Column(String, nullable=True)
     experience_years = Column(Integer, nullable=True)
     job_type = Column(String, nullable=True)
+    gender = Column(String, nullable=True)
+    ethnicity = Column(String, nullable=True)
+    veteran_status = Column(String, nullable=True)
+    disability_status = Column(String, nullable=True)
+    work_authorization = Column(String, nullable=True)
+    requires_sponsorship = Column(Boolean, default=False)
+    target_salary = Column(Integer, nullable=True)
     hashed_password = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 

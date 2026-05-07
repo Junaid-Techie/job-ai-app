@@ -19,6 +19,7 @@ export default function Navbar() {
           <Link href="/" className="text-gray-300 hover:text-white transition hidden md:block">Home</Link>
           <Link href="/about" className="text-gray-300 hover:text-white transition">About</Link>
           <Link href="/features" className="text-gray-300 hover:text-white transition">Features</Link>
+          <Link href="/contact" className="text-gray-300 hover:text-white transition">Contact</Link>
 
           {session ? (
             <>

@@ -381,6 +381,13 @@ class UpdateProfileRequest(BaseModel):
     github_url: str | None = None
     portfolio_url: str | None = None
     experience_years: int | None = None
+    gender: str | None = None
+    ethnicity: str | None = None
+    veteran_status: str | None = None
+    disability_status: str | None = None
+    work_authorization: str | None = None
+    requires_sponsorship: bool = False
+    target_salary: int | None = None
 
 @app.get("/profile/")
 def get_profile(
@@ -405,7 +412,14 @@ def get_profile(
             "linkedin_url": db_user.linkedin_url,
             "github_url": db_user.github_url,
             "portfolio_url": db_user.portfolio_url,
-            "experience_years": db_user.experience_years
+            "experience_years": db_user.experience_years,
+            "gender": db_user.gender,
+            "ethnicity": db_user.ethnicity,
+            "veteran_status": db_user.veteran_status,
+            "disability_status": db_user.disability_status,
+            "work_authorization": db_user.work_authorization,
+            "requires_sponsorship": db_user.requires_sponsorship,
+            "target_salary": db_user.target_salary
         }
     finally:
         db.close()
@@ -434,6 +448,13 @@ def update_profile(
         db_user.github_url = data.github_url
         db_user.portfolio_url = data.portfolio_url
         db_user.experience_years = data.experience_years
+        db_user.gender = data.gender
+        db_user.ethnicity = data.ethnicity
+        db_user.veteran_status = data.veteran_status
+        db_user.disability_status = data.disability_status
+        db_user.work_authorization = data.work_authorization
+        db_user.requires_sponsorship = data.requires_sponsorship
+        db_user.target_salary = data.target_salary
         db.commit()
         return {"message": "Profile updated successfully"}
     finally:
