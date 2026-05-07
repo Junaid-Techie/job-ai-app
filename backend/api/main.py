@@ -375,10 +375,10 @@ def get_interview_prep(
 # Profile Endpoints
 # -------------------------
 class UpdateProfileRequest(BaseModel):
-    first_name: str
-    last_name: str
-    location: str
-    job_type: str
+    first_name: str | None = None
+    last_name: str | None = None
+    location: str | None = None
+    job_type: str | None = None
     headline: str | None = None
     about: str | None = None
     skills: str | None = None

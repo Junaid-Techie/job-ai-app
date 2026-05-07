@@ -161,30 +161,41 @@ export default function Profile() {
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 border-b border-white/5 pb-8 gap-6">
           <div className="flex items-center gap-6">
-            <div className="relative group">
-              <div className="w-24 h-24 rounded-full bg-black border-2 border-white/10 overflow-hidden flex items-center justify-center shadow-2xl shrink-0">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-3xl font-bold text-gray-500">{(firstName?.[0] || "")}{(lastName?.[0] || "")}</span>
-                )}
+            <div className="flex flex-col items-center gap-2">
+              <div className="relative group">
+                <div className="w-24 h-24 rounded-full bg-black border-2 border-white/10 overflow-hidden flex items-center justify-center shadow-2xl shrink-0">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-3xl font-bold text-gray-500">{(firstName?.[0] || "")}{(lastName?.[0] || "")}</span>
+                  )}
+                </div>
+                <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center text-xs font-medium cursor-pointer backdrop-blur-sm">
+                  Upload
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onloadend = () => setAvatarUrl(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                    }} 
+                  />
+                </label>
               </div>
-              <label className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full flex items-center justify-center text-xs font-medium cursor-pointer backdrop-blur-sm">
-                Upload
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => setAvatarUrl(reader.result as string);
-                      reader.readAsDataURL(file);
-                    }
-                  }} 
-                />
-              </label>
+              {avatarUrl && (
+                <button
+                  type="button"
+                  onClick={() => setAvatarUrl("")}
+                  className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Remove photo
+                </button>
+              )}
             </div>
             <div>
               <h1 className="text-4xl font-bold text-white mb-2">Advanced Career Profile</h1>
