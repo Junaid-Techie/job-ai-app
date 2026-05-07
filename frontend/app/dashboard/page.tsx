@@ -344,7 +344,7 @@ export default function Dashboard() {
                   >
                     {resumes.map(r => (
                       <option key={r.id} value={r.id}>
-                        Resume #{r.id} ({r.file_type || 'text'})
+                        {r.file_name || `Resume #${r.id}`}
                       </option>
                     ))}
                     <option value="new">-- Upload New Resume --</option>

@@ -593,13 +593,30 @@ def get_resumes(db: Session = Depends(get_db), user=Depends(get_current_user)):
         user_id = int(user["sub"])
         from .models import Resume
         resumes = db.query(Resume).filter(Resume.user_id == user_id).order_by(Resume.id.desc()).all()
+
+        def extract_filename(file_path: str, file_type: str) -> str:
+            """Extract the original filename from the stored path (user_id/uuid_originalname)."""
+            try:
+                # file_path format: "{user_id}/{uuid}_{original_filename}"
+                basename = file_path.split("/")[-1]  # strip user_id prefix
+                # Strip the UUID prefix (everything up to and including the first underscore after uuid)
+                # UUID is 36 chars: e.g. "a1b2c3d4-e5f6-7890-abcd-ef1234567890_MyResume.docx"
+                parts = basename.split("_", 1)
+                if len(parts) == 2:
+                    return parts[1]  # the original filename
+                return basename
+            except Exception:
+                return f"Resume #{file_type or 'file'}"
+
         return [
             {
                 "id": r.id,
                 "file_type": r.file_type,
-                "uploaded_at": getattr(r, "id", 0)
+                "file_name": extract_filename(r.file_path, r.file_type) if r.file_path != "manual_input" else "Pasted Text",
             }
             for r in resumes
         ]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     finally:
         db.close()
