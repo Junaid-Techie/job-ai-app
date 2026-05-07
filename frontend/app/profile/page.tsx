@@ -45,18 +45,20 @@ export default function Profile() {
   const [statusMsg, setStatusMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  const token = (session as any)?.accessToken;
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
-    } else if (session?.accessToken) {
+    } else if (status === "authenticated" && token) {
       fetchProfile();
     }
-  }, [status, session]);
+  }, [status, token]);
 
   const fetchProfile = async () => {
     try {
       const res = await fetch(`${API_URL}/profile/`, {
-        headers: { Authorization: `Bearer ${session?.accessToken}` }
+        headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
@@ -108,7 +110,7 @@ export default function Profile() {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",
-          Authorization: `Bearer ${session?.accessToken}` 
+          Authorization: `Bearer ${token}` 
         },
         body: JSON.stringify({ 
           avatar_url: avatarUrl,

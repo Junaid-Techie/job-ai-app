@@ -215,6 +215,9 @@ def match_jobs(
             Job.embedding.l2_distance(resume.embedding)
         ).limit(10).all()
 
+        if not jobs:
+            return []
+
         return [
             {
                 "job_id": job.id,
@@ -228,8 +231,10 @@ def match_jobs(
             for job in jobs
         ]
 
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Match error: {str(e)}")
 
     finally:
         db.close()

@@ -89,9 +89,11 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         setResumes(data);
-        if (data.length > 0 && !resumeId) {
-          setResumeId(data[0].id);
-        } else if (data.length === 0) {
+        if (data.length > 0) {
+          // Always auto-select the most recent resume (first in list) if none selected
+          setResumeId(prev => prev ?? data[0].id);
+          setShowUpload(false);
+        } else {
           setShowUpload(true);
         }
       }
@@ -117,10 +119,11 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (activeTab === "applications" && token) fetchApplications();
-    if (activeTab === "saved" && token) fetchSavedJobs();
-    if (activeTab === "recommendations" && token) fetchRecommendations();
-    if (token && resumes.length === 0) fetchResumes();
+    if (!token) return;
+    if (activeTab === "applications") fetchApplications();
+    if (activeTab === "saved") fetchSavedJobs();
+    if (activeTab === "recommendations") fetchRecommendations();
+    fetchResumes();
   }, [activeTab, token]);
 
   if (status === "loading" || !session) return null;
@@ -181,7 +184,10 @@ export default function Dashboard() {
   };
 
   const matchJobs = async () => {
-    if (!resumeId) return;
+    if (!resumeId) {
+      setError("Please select or upload a resume first.");
+      return;
+    }
     if (!token) return;
 
     setLoading(true);
@@ -200,7 +206,10 @@ export default function Dashboard() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!response.ok) throw new Error("Failed to match jobs");
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.detail || "Failed to match jobs");
+      }
 
       const data = await response.json();
       setMatches(data);
