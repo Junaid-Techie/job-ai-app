@@ -538,7 +538,13 @@ def get_recommendations(
         if not resume:
             raise HTTPException(status_code=404, detail="No resume found to generate recommendations")
             
-        jobs = db.query(Job).order_by(
+        jobs = db.query(
+            Job.id,
+            Job.title,
+            Job.company_size,
+            Job.location,
+            Job.embedding.l2_distance(resume.embedding).label("distance")
+        ).order_by(
             Job.embedding.l2_distance(resume.embedding)
         ).limit(5).all()
         
@@ -548,7 +554,7 @@ def get_recommendations(
                 "title": job.title,
                 "company": job.company_size,
                 "location": job.location,
-                "similarity_score": round((1 / (1 + getattr(job, 'distance', 0)))) * 100 if hasattr(job, 'distance') else 0
+                "similarity_score": round((1 / (1 + job.distance)) * 100, 2)
             }
             for job in jobs
         ]
