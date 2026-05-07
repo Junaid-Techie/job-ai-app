@@ -37,6 +37,86 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
+
+  const token = (session as any)?.accessToken;
+
+  const fetchApplications = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/applications/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setApplications(await res.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchSavedJobs = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/saved-jobs/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setSavedJobs(await res.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/recommendations/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setRecommendations(await res.json());
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchResumes = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/resumes/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setResumes(data);
+        if (data.length > 0 && !resumeId) {
+          setResumeId(data[0].id);
+        } else if (data.length === 0) {
+          setShowUpload(true);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const saveJob = async (jobId: number) => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${API_URL}/save-job/${jobId}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        alert("Job saved successfully!");
+        if (activeTab === "saved") fetchSavedJobs();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
     if (activeTab === "applications" && token) fetchApplications();
     if (activeTab === "saved" && token) fetchSavedJobs();
     if (activeTab === "recommendations" && token) fetchRecommendations();
