@@ -66,4 +66,24 @@ def upload_resume(
     db.commit()
     db.refresh(new_resume)
 
+    # Automatically extract skills (Phase 1 Roadmap Feature)
+    try:
+        from .embedding_service import client
+        from .models import User
+        prompt = f"Extract the top 10 most prominent technical and soft skills from this resume. Return ONLY a comma separated list of skills, nothing else. Resume snippet: {extracted_text[:3000]}"
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=100
+        )
+        extracted_skills = response.choices[0].message.content.strip()
+        
+        # Save extracted skills to User profile if they don't have any
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if db_user and not db_user.skills:
+            db_user.skills = extracted_skills
+            db.commit()
+    except Exception as e:
+        print("Skill extraction failed:", e)
+
     return {"resume_id": new_resume.id}

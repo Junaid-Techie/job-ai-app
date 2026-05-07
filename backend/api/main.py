@@ -388,6 +388,10 @@ class UpdateProfileRequest(BaseModel):
     work_authorization: str | None = None
     requires_sponsorship: bool = False
     target_salary: int | None = None
+    avatar_url: str | None = None
+    phone_number: str | None = None
+    current_company: str | None = None
+    highest_education: str | None = None
 
 @app.get("/profile/")
 def get_profile(
@@ -419,7 +423,11 @@ def get_profile(
             "disability_status": db_user.disability_status,
             "work_authorization": db_user.work_authorization,
             "requires_sponsorship": db_user.requires_sponsorship,
-            "target_salary": db_user.target_salary
+            "target_salary": db_user.target_salary,
+            "avatar_url": db_user.avatar_url,
+            "phone_number": db_user.phone_number,
+            "current_company": db_user.current_company,
+            "highest_education": db_user.highest_education
         }
     finally:
         db.close()
@@ -455,6 +463,10 @@ def update_profile(
         db_user.work_authorization = data.work_authorization
         db_user.requires_sponsorship = data.requires_sponsorship
         db_user.target_salary = data.target_salary
+        db_user.avatar_url = data.avatar_url
+        db_user.phone_number = data.phone_number
+        db_user.current_company = data.current_company
+        db_user.highest_education = data.highest_education
         db.commit()
         return {"message": "Profile updated successfully"}
     finally:
