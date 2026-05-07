@@ -130,15 +130,22 @@ export default function AuthPage() {
     }
 
     setLoading(true);
-    // Simulating network request for password reset
-    setTimeout(() => {
-      setSuccessMsg("If an account exists, a password reset link has been sent to your email.");
-      setLoading(false);
+    try {
+      const res = await fetch(`${API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      // Always show the same message regardless of response to prevent enumeration
+      setSuccessMsg("If an account exists with that email, a password reset link has been sent. Check your inbox (and spam folder).");
       setTimeout(() => {
         setMode("signIn");
         resetState();
-      }, 3000);
-    }, 1500);
+      }, 5000);
+    } catch {
+      setError("Network error. Please try again.");
+    }
+    setLoading(false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
