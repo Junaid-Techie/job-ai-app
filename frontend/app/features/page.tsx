@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 
 export default function Features() {
   return (
-    <div className="relative pt-32 pb-24 min-h-screen overflow-hidden bg-black text-white">
+    <div className="relative pt-32 pb-24 min-h-screen overflow-hidden text-white">
       <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-blue-600/10 blur-[200px] rounded-full pointer-events-none -z-10" />
       <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-600/10 blur-[150px] rounded-full pointer-events-none -z-10" />
       

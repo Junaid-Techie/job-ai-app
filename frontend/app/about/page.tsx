@@ -5,7 +5,7 @@ import Link from "next/link";
 
 export default function About() {
   return (
-    <div className="relative pt-32 pb-24 min-h-screen bg-black text-white overflow-hidden">
+    <div className="relative pt-32 pb-24 min-h-screen text-white overflow-hidden">
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-blue-600/10 blur-[150px] rounded-full pointer-events-none -z-10" />
       <div className="absolute bottom-0 left-0 w-[800px] h-[800px] bg-emerald-600/10 blur-[150px] rounded-full pointer-events-none -z-10" />
       

@@ -16,7 +16,7 @@ export default function Contact() {
   };
 
   return (
-    <div className="relative pt-32 pb-24 min-h-screen bg-black overflow-hidden flex items-center justify-center">
+    <div className="relative pt-32 pb-24 min-h-screen overflow-hidden flex items-center justify-center">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-900/20 blur-[150px] rounded-full pointer-events-none -z-10" />
       
       <motion.div

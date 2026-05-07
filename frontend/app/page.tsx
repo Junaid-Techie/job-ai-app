@@ -8,7 +8,7 @@ export default function Home() {
   const { data: session } = useSession();
 
   return (
-    <div className="relative bg-black min-h-screen font-sans text-white overflow-hidden">
+    <div className="relative min-h-screen font-sans text-white overflow-hidden">
       
       {/* Premium Gradient Backgrounds */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-gradient-to-b from-blue-900/40 via-blue-900/10 to-transparent blur-[120px] rounded-full pointer-events-none -z-10" />

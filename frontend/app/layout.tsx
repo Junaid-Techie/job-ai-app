@@ -4,6 +4,7 @@ import Providers from "./providers";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Background from "./components/Background";
+import CustomCursor from "./components/CustomCursor";
 
 export const metadata: Metadata = {
   title: "Job AI Matcher | Semantic Job Search",
@@ -20,6 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="min-h-screen text-white overflow-x-hidden">
         <Providers>
+          <CustomCursor />
           <Background />
           <div className="relative z-10 flex flex-col min-h-screen">
             <Navbar />

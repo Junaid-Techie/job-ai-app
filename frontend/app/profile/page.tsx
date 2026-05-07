@@ -132,7 +132,7 @@ export default function Profile() {
   if (status === "loading" || !session) return null;
 
   return (
-    <div className="relative pt-32 pb-24 min-h-[85vh] bg-[#050505]">
+    <div className="relative pt-32 pb-24 min-h-[85vh]">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
