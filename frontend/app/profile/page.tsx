@@ -120,7 +120,6 @@ export default function Profile() {
           avatar_url: avatarUrl,
           first_name: firstName, 
           last_name: lastName,
-          email: email,
           phone_number: phone,
           location, 
           job_type: jobType,
@@ -231,15 +230,19 @@ export default function Profile() {
                 <input type="text" value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition" />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Email Address</label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full p-3.5 rounded-xl bg-black/50 border border-white/10 text-white focus:border-blue-500 outline-none transition"
-                  placeholder="you@example.com"
-                />
-                <p className="text-xs text-gray-500 mt-1 ml-1">Changing your email will update your login credentials.</p>
+                <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
+                  Email Address <span className="normal-case text-gray-600 ml-1">(cannot be changed)</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={email}
+                    readOnly
+                    className="w-full p-3.5 rounded-xl bg-black/30 border border-white/5 text-gray-500 outline-none cursor-not-allowed select-none"
+                    tabIndex={-1}
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-600 text-sm">🔒</span>
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">Phone Number</label>

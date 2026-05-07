@@ -377,7 +377,6 @@ def get_interview_prep(
 class UpdateProfileRequest(BaseModel):
     first_name: str | None = None
     last_name: str | None = None
-    email: str | None = None
     location: str | None = None
     job_type: str | None = None
     headline: str | None = None
@@ -451,16 +450,10 @@ def update_profile(
         if not db_user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Handle email change — check for duplicates first
-        if data.email and data.email != db_user.email:
-            existing = db.query(User).filter(User.email == data.email, User.id != user_id).first()
-            if existing:
-                raise HTTPException(status_code=400, detail="That email is already in use by another account.")
-            db_user.email = data.email
-
         # Only update fields that were explicitly provided (not None)
         if data.first_name is not None: db_user.first_name = data.first_name
         if data.last_name is not None: db_user.last_name = data.last_name
+        # email is intentionally excluded — immutable after registration
         if data.location is not None: db_user.location = data.location
         if data.job_type is not None: db_user.job_type = data.job_type
         if data.headline is not None: db_user.headline = data.headline
