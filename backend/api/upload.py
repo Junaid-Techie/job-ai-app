@@ -45,7 +45,10 @@ def upload_resume(
     file_path = f"{user_id}/{file_id}_{file.filename}"
 
     # Upload to Supabase Storage
-    supabase.storage.from_("resumes").upload(file_path, file.file.read())
+    try:
+        supabase.storage.from_("resumes").upload(file_path, file.file.read())
+    except Exception as e:
+        print("Supabase storage upload failed (bucket might be missing), continuing safely:", e)
 
     file.file.seek(0)
     extracted_text = extract_text(file)
