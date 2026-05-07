@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from pydantic import BaseModel
 
 from .auth import router as auth_router
 from .upload import router as upload_router
@@ -368,7 +369,6 @@ def get_interview_prep(
 # -------------------------
 # Profile Endpoints
 # -------------------------
-from pydantic import BaseModel
 class UpdateProfileRequest(BaseModel):
     first_name: str
     last_name: str
