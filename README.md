@@ -200,6 +200,9 @@ job-ai-app/
 ✔ Secret management best practices  
 ✔ IPv4 vs IPv6 deployment debugging  
 ✔ Production troubleshooting workflow  
+✔ Live data ingestion & background tasks  
+✔ Automated resume-based job recommendations  
+✔ Full-stack state synchronization (Profiles, Jobs, Applications)  
 
 ---
 
@@ -258,24 +261,26 @@ This reflects real production-grade debugging.
 
 ---
 
-# 📈 Future Roadmap
+# 📈 Roadmap & Progress
 
-## Phase 1 – Intelligence
-- Resume PDF parsing  
-- Skill extraction  
-- Match explanation engine  
+## ✅ Phase 1 – Core Architecture (Completed)
+- Vector database integration (pgvector)
+- Semantic similarity search via OpenAI embeddings
+- Monorepo cloud deployment (Vercel + Render)
+
+## ✅ Phase 2 – Automation & Platform Integration (Completed)
+- Live job ingestion APIs from multiple sources
+- Automated job syncing via background tasks
+- Seamless resume-based recommendations loading automatically
+- Full-stack state synchronization (Profile, Jobs, Applications)
+- Saved job tracking and application dashboard
+- Resume management (Upload, switch between profiles)
+- Secure User Authentication
+
+## 🚧 Phase 3 – Advanced Intelligence (Upcoming)
+- Resume PDF direct parsing & skill extraction  
+- Match explanation engine (AI-generated reasoning)
 - Confidence scoring  
-
-## Phase 2 – Automation
-- Live job ingestion APIs  
-- Automated job syncing  
-- Personalized recommendations  
-- Saved job tracking  
-
-## Phase 3 – SaaS Platform
-- User authentication  
-- Resume management  
-- Application tracking dashboard  
 - Cover letter generator  
 - Subscription billing  
 - Auto-apply workflow  
