@@ -1,294 +1,274 @@
-# 🚀 Job AI Matcher  
-### Production-Grade AI Semantic Job Matching Platform
+# ⚙️ Job AI Matcher — Backend
 
-[![Python](https://img.shields.io/badge/Python-3.11-blue)]()
-[![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green)]()
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-blue)]()
-[![pgvector](https://img.shields.io/badge/Vector-Search-purple)]()
-[![OpenAI](https://img.shields.io/badge/OpenAI-Embeddings-black)]()
-[![Next.js](https://img.shields.io/badge/Next.js-Frontend-white)]()
+### FastAPI · PostgreSQL · pgvector · OpenAI · Supabase
 
----
-
-# 🌍 Live Application
-
-Frontend:  
-👉 https://job-ai-app-six.vercel.app  
-
-Backend API Docs:  
-👉 https://job-ai-app-backend.onrender.com/docs  
+[![Python](https://img.shields.io/badge/Python-3.11-4b5563?style=flat)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110-374151?style=flat)](https://fastapi.tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-475569?style=flat)](https://supabase.com)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o+Embeddings-1f2937?style=flat)](https://openai.com)
+[![Deployed on Render](https://img.shields.io/badge/Deployed-Render-6b7280?style=flat)](https://render.com)
 
 ---
 
-# 🧠 Executive Summary
+## 🌍 Live Endpoints
 
-**Job AI Matcher** is a full-stack AI-powered web application that performs semantic job matching using vector embeddings and similarity search.
+**API Docs (Swagger UI)**
+👉 https://job-ai-app-backend.onrender.com/docs
 
-Unlike traditional keyword-based systems, this platform:
-
-- Converts resumes into vector embeddings
-- Converts job descriptions into embeddings
-- Uses PostgreSQL + pgvector for semantic similarity
-- Ranks jobs by mathematical distance
-- Deploys across modern cloud infrastructure
-
-This project demonstrates real-world AI integration, vector database usage, and production-ready full-stack deployment.
+**Frontend**
+👉 https://job-ai-app-six.vercel.app
 
 ---
 
-# 🎯 Business Problem Solved
+## 🧠 What This Backend Does
 
-Traditional job boards:
+This is the core AI engine of the Job AI Matcher platform. It handles:
 
-- Rely on exact keyword matching
-- Miss semantically similar opportunities
-- Fail to understand skill equivalence
-
-This system introduces:
-
-✔ Semantic understanding of resume context  
-✔ Embedding-based ranking  
-✔ AI-driven similarity scoring  
-✔ Structured filtering layer  
+- **User authentication** — Register, login, JWT issuance, password reset via email
+- **Resume management** — Upload (PDF/DOCX/TXT), text extraction, embedding generation, multi-resume profiles
+- **Live job ingestion** — Fetches fresh jobs from Remotive and Arbeitnow APIs on demand
+- **Semantic job matching** — Vector similarity search via pgvector (L2 distance)
+- **Auto-apply** — GPT-4o-mini generates a tailored cover letter and tracks the application
+- **Interview prep** — AI generates personalized questions + tips per application
+- **Profile management** — 20+ field user profile including compliance/EEOC data
+- **Saved jobs** — Bookmark and retrieve jobs across sessions
+- **Recommendations** — Auto-ranked jobs based on user's latest resume embedding
 
 ---
 
-# 🏗 High-Level Architecture
+## 🏗 Architecture
 
 ```
-Next.js (Vercel)
-        ↓
-FastAPI (Render)
-        ↓
-OpenAI Embeddings API
-        ↓
-Supabase PostgreSQL + pgvector
-        ↓
-Vector Similarity Search
+FastAPI
+  ├── /auth/*          → JWT auth, register, login, password reset (Resend)
+  ├── /upload-resume   → File parsing (PyPDF2, python-docx) + Supabase Storage
+  ├── /add-resume/     → Text resume embedding
+  ├── /resumes/        → List user's stored resumes
+  ├── /match-jobs/     → Semantic match with structured filters
+  ├── /search-and-match/ → Ingest live jobs THEN match (inline pipeline)
+  ├── /auto-apply/     → GPT-4o-mini cover letter + application record
+  ├── /applications/   → Application history
+  ├── /interview-prep/ → AI-generated prep guide
+  ├── /save-job/       → Save a job
+  ├── /saved-jobs/     → List saved jobs
+  ├── /recommendations/ → Top matches from latest resume
+  └── /profile/        → GET + PUT full user profile
 ```
 
 ---
 
-# 🔬 Technical Deep Dive
+## 📂 File Structure
 
-## 1️⃣ Resume Embedding
-
-Resume text → OpenAI API → 1536-dimension vector
-
-Model used:
 ```
-text-embedding-3-small
+backend/
+│
+├── api/
+│   ├── main.py              # All primary API routes
+│   ├── auth.py              # Register, login, forgot/reset password
+│   ├── upload.py            # Resume upload, text extraction, skill auto-extraction
+│   ├── models.py            # SQLAlchemy models
+│   ├── database.py          # DB session and engine setup
+│   ├── embedding_service.py # OpenAI embedding wrapper
+│   ├── security.py          # JWT creation + verification
+│   └── supabase_client.py   # Supabase storage client
+│
+├── scripts/
+│   └── ingest_jobs.py       # Remotive + Arbeitnow job ingestion
+│
+├── requirements.txt
+└── runtime.txt              # python-3.11.x
 ```
 
-## 2️⃣ Job Embedding
+---
 
-Job title + description → embedding stored in PostgreSQL.
+## 🗄 Data Models
 
-## 3️⃣ Vector Storage
+### `users`
+Full user profile including: name, email, hashed_password (Argon2), location, headline, about, skills, job_type, experience_years, target_salary, linkedin_url, github_url, portfolio_url, current_company, highest_education, avatar_url, phone_number, gender, ethnicity, veteran_status, disability_status, work_authorization, requires_sponsorship.
 
-PostgreSQL with `pgvector` extension:
+### `resumes`
+- `content` — Extracted plain text
+- `embedding` — `Vector(1536)` from OpenAI `text-embedding-3-small`
+- `file_path` — Supabase Storage path (`{user_id}/{uuid}_{filename}`)
+- `file_type` — pdf / docx / txt / text
 
-```sql
-create extension if not exists vector;
-```
+### `jobs`
+- `title`, `description`, `location`, `work_mode`, `job_type`, `experience_level`
+- `salary_min`, `salary_max`, `sponsorship`, `company_size`, `industry`
+- `url` — Original job posting URL
+- `embedding` — `Vector(1536)`
 
-Column type:
+### `applications`
+- Links user → job → resume
+- `status`: APPLIED / INTERVIEW / REJECTED
+- `cover_letter` — GPT-4o-mini generated text
+
+### `saved_jobs`
+Bookmark table linking user ↔ job with timestamp.
+
+### `password_reset_tokens`
+Secure single-use, 1-hour-expiry tokens for password resets.
+
+---
+
+## 🔑 Full API Reference
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/auth/register` | — | Register new user |
+| `POST` | `/auth/login` | — | Login, returns JWT |
+| `POST` | `/auth/forgot-password` | — | Send reset email via Resend |
+| `POST` | `/auth/reset-password` | — | Consume token, set new password |
+| `POST` | `/upload-resume` | ✅ JWT | Upload PDF/DOCX/TXT, extract text + auto-extract skills |
+| `POST` | `/add-resume/` | ✅ JWT | Add resume via raw text |
+| `GET` | `/resumes/` | ✅ JWT | List user's uploaded resumes |
+| `GET` | `/match-jobs/{resume_id}` | ✅ JWT | Semantic match with filters |
+| `POST` | `/search-and-match/{resume_id}` | ✅ JWT | Fetch live jobs + match inline |
+| `POST` | `/auto-apply/` | ✅ JWT | Generate cover letter + apply |
+| `GET` | `/applications/` | ✅ JWT | Application history |
+| `GET` | `/interview-prep/{application_id}` | ✅ JWT | AI prep guide |
+| `POST` | `/save-job/{job_id}` | ✅ JWT | Bookmark a job |
+| `GET` | `/saved-jobs/` | ✅ JWT | List saved jobs |
+| `GET` | `/recommendations/` | ✅ JWT | Top matches from latest resume |
+| `GET` | `/profile/` | ✅ JWT | Read full user profile |
+| `PUT` | `/profile/` | ✅ JWT | Update user profile |
+| `POST` | `/add-job/` | 🔑 Admin Secret | Add job manually |
+| `POST` | `/admin/sync-jobs/` | ✅ JWT | Trigger background job sync |
+
+---
+
+## 🧬 Semantic Matching Deep Dive
+
+### Embedding Generation
 ```python
-Vector(1536)
+# OpenAI text-embedding-3-small
+# 1536-dimension float vector
+embedding = client.embeddings.create(
+    model="text-embedding-3-small",
+    input=text
+).data[0].embedding
 ```
 
-## 4️⃣ Semantic Search Query
+### Vector Search (SQLAlchemy + pgvector)
+```python
+query = db.query(
+    Job.id, Job.title, Job.location, ...,
+    Job.embedding.l2_distance(resume.embedding).label("distance")
+).order_by(
+    Job.embedding.l2_distance(resume.embedding)
+).limit(15)
+```
 
-SQLAlchemy L2 distance:
+### Similarity Score
+```python
+similarity_score = round((1 / (1 + job.distance)) * 100, 2)
+```
+
+Lower L2 distance → Higher similarity percentage.
+
+---
+
+## 🌐 Live Job Ingestion
+
+The `search-and-match` endpoint ingests fresh jobs **inline** before matching:
 
 ```python
-Job.embedding.l2_distance(resume.embedding)
+fetch_remotive(db, limit=15)   # https://remotive.com/api/remote-jobs
+fetch_arbeitnow(db, limit=15)  # https://arbeitnow.com/api/job-board-api
 ```
 
-## 5️⃣ Similarity Conversion
-
-```
-similarity_score = (1 / (1 + distance)) * 100
-```
-
-Lower distance → Higher semantic similarity.
+- No API keys required for either source
+- Deduplication: skips jobs with identical title + company already in DB
+- Each job is embedded with OpenAI and stored with a URL for direct application
 
 ---
 
-# 📊 Example API Response
+## 🚀 Local Development
 
-```json
-[
-  {
-    "job_id": 1,
-    "title": "Backend Python Engineer",
-    "similarity_score": 58.18
-  }
-]
+### 1. Create virtual environment
+```bash
+python -m venv venv
+venv\Scripts\activate  # Windows
 ```
 
----
-
-# 📂 Monorepo Structure
-
-```
-job-ai-app/
-│
-├── backend/
-│   ├── api/
-│   │   ├── main.py
-│   │   ├── database.py
-│   │   ├── models.py
-│   │   ├── embedding_service.py
-│   │
-│   ├── requirements.txt
-│   ├── runtime.txt
-│   └── venv/
-│
-├── frontend/
-│   ├── app/
-│   ├── public/
-│   └── ...
-│
-└── README.md
+### 2. Install dependencies
+```bash
+pip install -r requirements.txt
 ```
 
----
+### 3. Create `.env` in `/backend`
+```env
+DATABASE_URL=postgresql://user:password@host:port/dbname
+OPENAI_API_KEY=sk-...
+SECRET_KEY=your-jwt-secret
+ADMIN_SECRET=your-admin-secret
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_KEY=your-supabase-anon-key
+RESEND_API_KEY=re_...
+RESEND_FROM_EMAIL=noreply@yourdomain.com
+FRONTEND_URL=http://localhost:3000
+```
 
-# 🛠 Tech Stack
+### 4. Run server
+```bash
+python -m uvicorn api.main:app --reload
+```
 
-### Backend
-- FastAPI
-- SQLAlchemy
-- pgvector
-- psycopg2-binary
-- python-dotenv
-- OpenAI SDK
-
-### Database
-- Supabase PostgreSQL (Free Tier)
-- Session Pooler (IPv4 compatible)
-- pgvector extension
-
-### Frontend
-- Next.js (App Router)
-- TypeScript
-- Tailwind CSS
-
-### Deployment
-- Backend → Render (Free Tier)
-- Frontend → Vercel
-- Database → Supabase
+API available at `http://127.0.0.1:8000`
+Swagger docs at `http://127.0.0.1:8000/docs`
 
 ---
 
-# 🚀 Deployment Architecture
+## 🚀 Deployment (Render)
 
-## Backend (Render)
+| Setting | Value |
+|---|---|
+| Root Directory | `backend` |
+| Python Version | `3.11` (via `runtime.txt`) |
+| Build Command | `pip install -r requirements.txt` |
+| Start Command | `python -m uvicorn api.main:app --host 0.0.0.0 --port 10000` |
 
-- Root Directory → `backend`
-- Python version pinned to 3.11 via `runtime.txt`
-- Build → `pip install -r requirements.txt`
-- Start → `python -m uvicorn api.main:app --host 0.0.0.0 --port 10000`
-- Supabase Session Pooler URL required (IPv4 compatible)
+**Required Environment Variables on Render:**
+- `DATABASE_URL` — Supabase Session Pooler URL (IPv4 compatible)
+- `OPENAI_API_KEY`
+- `SECRET_KEY`
+- `ADMIN_SECRET`
+- `SUPABASE_URL`
+- `SUPABASE_KEY`
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+- `FRONTEND_URL`
 
-## Frontend (Vercel)
-
-- Root Directory → `frontend`
-- Environment variable:
-  ```
-  NEXT_PUBLIC_API_URL
-  ```
-
----
-
-# 🔐 Security & DevOps Notes
-
-✔ `.env` excluded from Git  
-✔ API keys rotated after exposure  
-✔ Environment variables managed via cloud provider  
-✔ Supabase password URL-encoded  
-✔ CORS configured properly  
-✔ IPv4 pooling used for Render compatibility  
-✔ Python runtime pinned for stability  
+> ⚠️ Use the **Session Pooler** connection string from Supabase, not the direct URL. Render free tier is IPv4-only; direct Supabase connections are IPv6.
 
 ---
 
-# 🧪 Production Issues Solved
+## 🔐 Security Design
 
-During deployment, the following real-world issues were resolved:
-
-- IPv6 database connection failure on Render
-- Supabase Direct Connection incompatibility
-- CORS blocking cross-origin requests
-- Missing dependencies in production
-- Virtual environment path corruption
-- Python 3.14 compatibility risk
-- Upstream Git branch conflicts
-
-This demonstrates full-stack debugging and deployment maturity.
+- **Argon2** password hashing (memory-hard, winner of PHC)
+- **JWT** with `python-jose` — tokens verified on every protected route
+- **Admin routes** protected by a separate `admin-secret` header
+- **Password reset tokens**: single-use, 1-hour expiry, enumeration-safe response
+- **CORS** restricted to `localhost:3000` and the production Vercel domain
+- **Supabase file paths** include UUID prefix to prevent path guessing
 
 ---
 
-# ⚡ Performance Considerations
+## 🏆 Engineering Highlights
 
-- Vector search offloaded to database
-- OpenAI embeddings cached in DB
-- Stateless backend design
-- Connection pooling via Supabase
-- Free-tier optimized deployment
-
----
-
-# 📈 Scalability Strategy
-
-Future improvements include:
-
-- Indexing embeddings
-- Batch embedding generation
-- Background job ingestion
-- Authentication layer
-- Resume file parsing
-- Intelligent re-ranking
-- User dashboards
-- SaaS billing integration
+- Vector database semantic search (pgvector, L2 distance)
+- Inline live data ingestion pipeline (no external scheduler needed)
+- Multi-modal resume ingestion (PDF, DOCX, TXT, raw text)
+- AI auto-skill extraction from resume on upload
+- GPT-4o-mini generative AI for cover letters and interview prep
+- Argon2 + JWT full auth system with email-based reset
+- SQLAlchemy ORM with proper relationship navigation
+- FastAPI router modularization (auth, upload, main)
+- Supabase Storage integration for file persistence
+- Production IPv4 compatibility via Session Pooler
 
 ---
 
-# 🧠 Engineering Highlights (Resume-Ready)
-
-This project demonstrates:
-
-- Vector database implementation using pgvector
-- Embedding-based semantic similarity search
-- OpenAI API integration
-- Full-stack monorepo architecture
-- Cloud deployment with Render & Vercel
-- Environment variable security
-- Production debugging workflow
-- SQLAlchemy ORM integration
-- API design with FastAPI
-- Real-world DevOps troubleshooting
-
----
-
-# 🏆 Why This Project Is Impressive
-
-This is not a tutorial project.
-
-It showcases:
-
-- End-to-end AI system design
-- Vector-based information retrieval
-- Cloud deployment architecture
-- Real debugging of production issues
-- Secure secret management
-- Modern frontend-backend separation
-
-It reflects production-level thinking.
-
----
-
-# 📜 License
+## 📜 License
 
 MIT License
